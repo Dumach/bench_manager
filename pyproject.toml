@@ -1,8 +1,8 @@
 [project]
 name = "bench_manager"
 authors = [
-    { name = "Frappe", email = "inf@frappe.io"},
-    { name = "Alex Nagy", email = "nagyalex003@gmail.com"}
+    { name = "Alex Nagy", email = "nagyalex003@gmail.com"},
+    { name = "Frappe", email = "info@frappe.io"}
 ]
 description = "On Host Frappe Management Application"
 requires-python = ">=3.12"
