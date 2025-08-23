@@ -17,6 +17,28 @@ from frappe.model.document import Document
 
 
 class App(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		app_color: DF.Data | None
+		app_description: DF.Data
+		app_email: DF.Data
+		app_icon: DF.Data | None
+		app_license: DF.Data | None
+		app_name: DF.Data
+		app_publisher: DF.Data
+		app_title: DF.Data | None
+		bench_settings: DF.Data | None
+		current_git_branch: DF.Data | None
+		developer_flag: DF.Int
+		is_git_repo: DF.Check
+		version: DF.Data | None
+	# end: auto-generated types
 	app_info_fields = [
 		"app_title",
 		"app_description",

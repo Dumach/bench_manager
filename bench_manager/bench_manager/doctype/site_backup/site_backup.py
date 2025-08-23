@@ -12,6 +12,25 @@ from frappe.model.document import Document
 
 
 class SiteBackup(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		bench_settings: DF.Data | None
+		date: DF.Data
+		developer_flag: DF.Int
+		file_path: DF.Data | None
+		hash: DF.Data | None
+		private_file_backup: DF.Check
+		public_file_backup: DF.Check
+		site_name: DF.Data
+		stored_location: DF.Data
+		time: DF.Data
+	# end: auto-generated types
 	def autoname(self):
 		if self.site_name == None:
 			return

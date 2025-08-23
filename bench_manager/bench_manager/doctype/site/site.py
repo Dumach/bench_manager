@@ -18,6 +18,37 @@ from bench_manager.bench_manager.utils import (
 from frappe.model.document import Document
 from bench_manager.bench_manager.doctype.bench_settings.bench_settings import sync_sites
 class Site(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		app_list: DF.Text | None
+		auto_backup: DF.Check
+		backup_size: DF.Float
+		bench_settings: DF.Data | None
+		database_size: DF.Float
+		db_name: DF.Data | None
+		db_password: DF.Password | None
+		developer_flag: DF.Int
+		developer_mode: DF.Check
+		disable_website_cache: DF.Check
+		dropbox_backup: DF.Check
+		emails: DF.Data | None
+		expiry: DF.Data | None
+		files_size: DF.Float
+		frequency: DF.Literal["", "Daily", "Weekly", "Monthly"]
+		install_erpnext: DF.Check
+		maintenance_mode: DF.Data | None
+		pause_scheduler: DF.Data | None
+		site_alias: DF.Text | None
+		site_name: DF.Data
+		space: DF.Data | None
+		total: DF.Float
+	# end: auto-generated types
 	site_config_fields = [
 		"maintenance_mode",
 		"pause_scheduler",

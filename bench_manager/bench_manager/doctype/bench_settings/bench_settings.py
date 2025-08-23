@@ -48,6 +48,52 @@ from frappe.utils.background_jobs import enqueue
 ignore_list = [".DS_Store"]
 
 class BenchSettings(Document):
+	# begin: auto-generated types
+	# This code is auto-generated. Do not modify anything in this block.
+
+	from typing import TYPE_CHECKING
+
+	if TYPE_CHECKING:
+		from frappe.types import DF
+
+		admin_password: DF.Password | None
+		app_access_key: DF.Data | None
+		app_secret_key: DF.Password | None
+		auto_email_id: DF.Data | None
+		auto_update: DF.Check
+		background_workers: DF.Int
+		dropbox_access_key: DF.Password | None
+		dropbox_access_secret: DF.Password | None
+		dropbox_access_token: DF.Password | None
+		file_backup: DF.Check
+		file_watcher_port: DF.Int
+		frappe_git_branch: DF.Data | None
+		frappe_user: DF.Data | None
+		github_password: DF.Password | None
+		github_username: DF.Data | None
+		global_help_setup: DF.Data | None
+		gunicorn_workers: DF.Int
+		last_sync_timestamp: DF.Float
+		mail_login: DF.Data | None
+		mail_password: DF.Password | None
+		mail_port: DF.Data | None
+		mail_server: DF.Data | None
+		password_root1: DF.Data | None
+		rebase_on_pull: DF.Check
+		redis_cache: DF.Data | None
+		redis_queue: DF.Data | None
+		redis_socketio: DF.Data | None
+		restart_supervisor_on_update: DF.Check
+		root_password: DF.Password | None
+		send_email_for_successful_backup: DF.Check
+		send_notifications_to: DF.Data | None
+		serve_default_site: DF.Check
+		shallow_clone: DF.Check
+		socketio_port: DF.Int
+		update_bench_on_update: DF.Check
+		use_tls: DF.Check
+		webserver_port: DF.Int
+	# end: auto-generated types
 	site_config_fields = [
 		"background_workers",
 		"shallow_clone",
