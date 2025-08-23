@@ -3,4 +3,6 @@
 *.egg-info
 *.swp
 tags
+node_modules
+__pycache__
 bench_manager/docs/current
