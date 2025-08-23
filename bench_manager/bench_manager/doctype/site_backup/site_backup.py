@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, Frappe and contributors
 # For license information, please see license.txt
 
@@ -74,7 +73,7 @@ def restore_backup(
 	new_site_name,
 	mysql_password,
 	admin_password,
-	key,
+	timestamp,
 ):
 	verify_whitelisted_call()
 	backup = frappe.get_doc("Site Backup", docname)
@@ -111,6 +110,6 @@ def restore_backup(
 		"bench_manager.bench_manager.utils.run_command",
 		commands=commands,
 		doctype=doctype,
-		key=key,
+		timestamp=timestamp,
 		docname=docname,
 	)

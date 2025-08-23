@@ -25,10 +25,10 @@ frappe.ui.form.on('Bench Settings', {
 				]
 			});
 			dialog.set_primary_action(__("Get App"), () => {
-				let key = frappe.datetime.get_datetime_as_string();
-				console_dialog(key);
+				let timestamp = frappe.datetime.get_datetime_as_string();
+				console_dialog(timestamp);
 				frm.call("console_command", {
-					key: key,
+					timestamp: timestamp,
 					caller: 'get-app',
 					app_name: dialog.fields_dict.app_name.value
 				}, () => {
@@ -59,7 +59,7 @@ frappe.ui.form.on('Bench Settings', {
 						],
 					});
 					dialog.set_primary_action(__("Create"), () => {
-						let key = frappe.datetime.get_datetime_as_string();
+						let timestamp = frappe.datetime.get_datetime_as_string();
 						let install_erpnext;
 						if (dialog.fields_dict.install_erpnext.last_value != 1){
 							install_erpnext = "false";
@@ -74,7 +74,7 @@ frappe.ui.form.on('Bench Settings', {
 							},
 							callback: function(r){
 								if (r.message == "console"){
-									console_dialog(key);
+									console_dialog(timestamp);
 									frappe.call({
 										method: 'bench_manager.bench_manager.doctype.site.site.create_site',
 										args: {
@@ -82,11 +82,11 @@ frappe.ui.form.on('Bench Settings', {
 											admin_password: dialog.fields_dict.admin_password.value,
 											mysql_password: dialog.fields_dict.mysql_password.value,
 											install_erpnext: install_erpnext,
-											key: key
+											timestamp: timestamp
 										}
 									});
 									dialog.hide();
-								} 
+								}
 							}
 						});
 					});
@@ -95,10 +95,10 @@ frappe.ui.form.on('Bench Settings', {
 			});
 		});
 		frm.add_custom_button(__("Update"), function(){
-			let key = frappe.datetime.get_datetime_as_string();
-			console_dialog(key);
+			let timestamp = frappe.datetime.get_datetime_as_string();
+			console_dialog(timestamp);
 			frm.call("console_command", {
-				key: key,
+				timestamp: timestamp,
 				caller: "bench_update"
 			});
 		});

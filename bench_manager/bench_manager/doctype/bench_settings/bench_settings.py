@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright (c) 2017, Frappe and contributors
 # For license information, please see license.txt
 
@@ -108,7 +107,7 @@ class BenchSettings(Document):
 		).strip("\n")
 
 	@frappe.whitelist()
-	def console_command(self, key, caller, app_name=None, branch_name=None):
+	def console_command(self, timestamp, caller, app_name=None, branch_name=None):
 		commands = {
 			"bench_update": ["bench update"],
 			"switch_branch": [""],
@@ -118,7 +117,7 @@ class BenchSettings(Document):
 			"bench_manager.bench_manager.utils.run_command",
 			commands=commands[caller],
 			doctype=self.doctype,
-			key=key,
+			timestamp=timestamp,
 			docname=self.name,
 		)
 
@@ -343,8 +342,8 @@ def setup_and_restart_nginx(root_password):
 	]
     commands.append(f"echo '{root_password}' | sudo -S service nginx restart")
     run_command(commands,"Bench Settings",dt_string)
-    
-def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=None):
+
+def run_command(commands, doctype, timestamp, cwd="..", docname=" ", after_command=None):
 	start_time = frappe.utils.time.time()
 	console_dump = ""
 	logged_command = " && ".join(commands)
@@ -359,7 +358,7 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 	doc = frappe.get_doc(
 		{
 			"doctype": "Bench Manager Command",
-			"key": key,
+			"timestamp": timestamp,
 			"source": doctype + ": " + docname,
 			"command": logged_command,
 			"status": "Ongoing",
@@ -368,7 +367,7 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 	doc.insert()
 	frappe.db.commit()
 	frappe.publish_realtime(
-		key,
+		timestamp,
 		"Executing Command:\n{logged_command}\n\n".format(logged_command=logged_command),
 		user=frappe.session.user,
 	)
@@ -378,19 +377,19 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 				shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd
 			)
 			for c in iter(lambda: safe_decode(terminal.stdout.read(1)), ""):
-				frappe.publish_realtime(key, c, user=frappe.session.user)
+				frappe.publish_realtime(timestamp, c, user=frappe.session.user)
 		if terminal.wait():
 			_close_the_doc(
-				start_time, key, console_dump, status="Failed", user=frappe.session.user
+				start_time, timestamp, console_dump, status="Failed", user=frappe.session.user
 			)
 		else:
 			_close_the_doc(
-				start_time, key, console_dump, status="Success", user=frappe.session.user
+				start_time, timestamp, console_dump, status="Success", user=frappe.session.user
 			)
 	except Exception as e:
 		_close_the_doc(
 			start_time,
-			key,
+			timestamp,
 			status="Failed",
 			user=frappe.session.user,
 		)
@@ -410,7 +409,7 @@ def backup_sites_with_daily_option():
     site_list = frappe.get_list("Site",filters={"frequency":"Daily","auto_backup":1,"dropbox_backup":0})
     if site_list:
         create_backup(site_list)
-        
+
 def backup_sites_with_weekly_option():
     site_list = frappe.get_list("Site",filters={"frequency":"Weekly","auto_backup":1,"dropbox_backup":0})
     if site_list:
@@ -426,7 +425,7 @@ def dropbox_backup_sites_with_daily_option():
     site_list = frappe.get_list("Site",filters={"frequency":"Daily","auto_backup":1,"dropbox_backup":1})
     if site_list:
         take_dropbox_backup(site_list)
-        
+
 def dropbox_backup_sites_with_weekly_option():
     site_list = frappe.get_list("Site",filters={"frequency":"Weekly","auto_backup":1,"dropbox_backup":1})
     if site_list:
@@ -441,12 +440,12 @@ def create_backup(site_list):
     from bench_manager.bench_manager.utils import run_command
     for i in site_list:
         site_doc = frappe.get_doc("Site",i.name)
-        key = datetime.now() + timedelta(seconds=1)
+        timestamp = datetime.now() + timedelta(seconds=1)
         commands=["bench --site {site_name} backup --with-files".format(site_name=i.name)]
         doctype=site_doc.doctype
-        key=key.strftime("%Y/%m/%d, %H:%M:%S")
+        timestamp=timestamp.strftime("%Y/%m/%d, %H:%M:%S")
         docname=i.name
-        run_command(commands, doctype, key, docname)
+        run_command(commands, doctype, timestamp, docname)
 
 
 def take_dropbox_backup(site_list):

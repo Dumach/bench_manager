@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Frappé and contributors
+// Copyright (c) 2017, Frappe and contributors
 // For license information, please see license.txt
 
 frappe.ui.form.on('App', {
@@ -187,7 +187,7 @@ frappe.ui.form.on('App', {
 					btn: this,
 					callback: function(r) {
 						if(!r.message) frappe.msgprint('This app has just one branch');
-						else {						
+						else {
 							var dialog = new frappe.ui.Dialog({
 								title: 'Select Branch',
 								fields: [

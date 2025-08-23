@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Frappé and contributors
+// Copyright (c) 2017, Frappe and contributors
 // For license information, please see license.txt
 
 frappe.ui.form.on('Site', {
@@ -13,9 +13,9 @@ frappe.ui.form.on('Site', {
 	},
 	validate: function(frm) {
 		if (frm.doc.db_name == undefined) {
-			let key = frappe.datetime.get_datetime_as_string();
-			console_dialog(key);
-			frm.doc.key = key;
+			let timestamp = frappe.datetime.get_datetime_as_string();
+			console_dialog(timestamp);
+			frm.doc.timestamp = timestamp;
 		}
 	},
 	refresh: function(frm) {
@@ -35,10 +35,10 @@ frappe.ui.form.on('Site', {
 				]
 			});
 			dialog.set_primary_action(__('Create'), () => {
-				let key = frappe.datetime.get_datetime_as_string();
-				console_dialog(key);
+				let timestamp = frappe.datetime.get_datetime_as_string();
+				console_dialog(timestamp);
 				frm.call('create_alias', {
-					key: key,
+					timestamp: timestamp,
 					alias: dialog.fields_dict.alias.value
 				}, () => {
 					dialog.hide();
@@ -56,10 +56,10 @@ frappe.ui.form.on('Site', {
 				]
 			});
 			dialog.set_primary_action(__('Delete'), () => {
-				let key = frappe.datetime.get_datetime_as_string();
-				console_dialog(key);
+				let timestamp = frappe.datetime.get_datetime_as_string();
+				console_dialog(timestamp);
 				frm.call('console_command', {
-					key: key,
+					timestamp: timestamp,
 					caller: 'delete-alias',
 					alias: dialog.fields_dict.alias.value
 				}, () => {
@@ -69,18 +69,18 @@ frappe.ui.form.on('Site', {
 			dialog.show();
 		});
 		frm.add_custom_button(__('Migrate'), function() {
-			let key = frappe.datetime.get_datetime_as_string();
-			console_dialog(key);
+			let timestamp = frappe.datetime.get_datetime_as_string();
+			console_dialog(timestamp);
 			frm.call('console_command', {
-				key: key,
+				timestamp: timestamp,
 				caller: 'migrate',
 			});
 		});
 		frm.add_custom_button(__('Backup'), function() {
-			let key = frappe.datetime.get_datetime_as_string();
-			console_dialog(key);
+			let timestamp = frappe.datetime.get_datetime_as_string();
+			console_dialog(timestamp);
 			frm.call('console_command', {
-				key: key,
+				timestamp: timestamp,
 				caller: 'backup',
 			});
 		});
@@ -103,10 +103,10 @@ frappe.ui.form.on('Site', {
 						]
 					});
 					dialog.set_primary_action(__('Reinstall'), () => {
-						let key = frappe.datetime.get_datetime_as_string();
-						console_dialog(key);
+						let timestamp = frappe.datetime.get_datetime_as_string();
+						console_dialog(timestamp);
 						frm.call('console_command', {
-							key: key,
+							timestamp: timestamp,
 							caller: 'reinstall',
 							admin_password: dialog.fields_dict.admin_password.value
 						}, () => {
@@ -133,10 +133,10 @@ frappe.ui.form.on('Site', {
 						],
 					});
 					dialog.set_primary_action(__('Install App'), () => {
-						let key = frappe.datetime.get_datetime_as_string();
-						console_dialog(key);
+						let timestamp = frappe.datetime.get_datetime_as_string();
+						console_dialog(timestamp);
 						frm.call('console_command', {
-							key: key,
+							timestamp: timestamp,
 							caller: 'install_app',
 							app_name: dialog.fields_dict.installable_apps.value
 						}, () => {
@@ -163,10 +163,10 @@ frappe.ui.form.on('Site', {
 						]
 					});
 					dialog.set_primary_action(__('Uninstall App'), () => {
-						let key = frappe.datetime.get_datetime_as_string();
-						console_dialog(key);
+						let timestamp = frappe.datetime.get_datetime_as_string();
+						console_dialog(timestamp);
 						frm.call('console_command', {
-							key: key,
+							timestamp: timestamp,
 							caller: 'uninstall_app',
 							app_name: dialog.fields_dict.removable_apps.value
 						}, () => {
@@ -206,7 +206,7 @@ frappe.ui.form.on('Site', {
 						],
 					});
 					dialog.set_primary_action(__('Drop'), () => {
-						let key = frappe.datetime.get_datetime_as_string();
+						let timestamp = frappe.datetime.get_datetime_as_string();
 						frappe.call({
 							method: 'bench_manager.bench_manager.doctype.site.site.verify_password',
 							args: {
@@ -216,9 +216,9 @@ frappe.ui.form.on('Site', {
 							callback: function(r){
 								if (r.message == 'console'){
 									frappe.run_serially([
-										() => console_dialog(key),
+										() => console_dialog(timestamp),
 										() => frm.call('console_command', {
-											key: key,
+											timestamp: timestamp,
 											caller: 'drop_site',
 											mysql_password: dialog.fields_dict.mysql_password.value
 										}, () => {

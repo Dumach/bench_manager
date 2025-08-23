@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2017, Frappé and contributors
+# Copyright (c) 2017, Frappe and contributors
 # For license information, please see license.txt
 
 
@@ -39,7 +38,7 @@ class Site(Document):
 	def validate(self):
 		if self.get("__islocal"):
 			if self.developer_flag == 0:
-				self.create_site(self.key)
+				self.create_site(self.timestamp)
 			site_config_path = self.site_name + "/site_config.json"
 			while not os.path.isfile(site_config_path):
 				time.sleep(2)
@@ -146,16 +145,16 @@ class Site(Document):
 			frappe.throw("The site you're trying to access doesn't actually exist.")
 
 	@frappe.whitelist()
-	def create_alias(self, key, alias):
+	def create_alias(self, timestamp, alias):
 		files = check_output("ls")
 		if alias in files:
 			frappe.throw("Sitename already exists")
 		else:
-			self.console_command(key=key, caller="create-alias", alias=alias)
+			self.console_command(timestamp=timestamp, caller="create-alias", alias=alias)
 
 	@frappe.whitelist()
 	def console_command(
-		self, key, caller, alias=None, app_name=None, admin_password=None, mysql_password=None
+		self, timestamp, caller, alias=None, app_name=None, admin_password=None, mysql_password=None
 	):
 		site_abspath = None
 		if alias:
@@ -194,7 +193,7 @@ class Site(Document):
 			"bench_manager.bench_manager.utils.run_command",
 			commands=commands[caller],
 			doctype=self.doctype,
-			key=key,
+			timestamp=timestamp,
 			docname=self.name,
 		)
 		return "executed"
@@ -268,7 +267,7 @@ def verify_password(site_name, mysql_password):
 
 
 @frappe.whitelist()
-def create_site(site_name, install_erpnext, mysql_password, admin_password, key, a_async=True):
+def create_site(site_name, install_erpnext, mysql_password, admin_password, timestamp, a_async=True):
 	verify_whitelisted_call()
 	commands = [
 		"bench new-site --mariadb-root-password {mysql_password} --admin-password {admin_password} --no-mariadb-socket {site_name}".format(
@@ -288,14 +287,14 @@ def create_site(site_name, install_erpnext, mysql_password, admin_password, key,
 		"bench_manager.bench_manager.doctype.site.site.jop_site_creation",
 		commands=commands,
 		doctype="Bench Settings",
-		key=key,
+		timestamp=timestamp,
 		site_name = site_name,
 		is_async = a_async
 	)
 
-def jop_site_creation(commands, doctype, key,site_name):
+def jop_site_creation(commands, doctype, timestamp,site_name):
     from bench_manager.bench_manager.utils import run_command
-    run_command(commands=commands,doctype="Bench Settings",key=key)
+    run_command(commands=commands,doctype="Bench Settings",timestamp=timestamp)
     sync_sites()
     site = frappe.get_doc("Site",site_name)
     if site.developer_flag == 1:

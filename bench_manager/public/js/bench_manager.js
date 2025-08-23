@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Frappé and contributors
+// Copyright (c) 2017, Frappe and contributors
 // For license information, please see license.txt
 
 var console_dialog = (key) => {

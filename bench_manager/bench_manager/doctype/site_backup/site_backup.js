@@ -62,8 +62,8 @@ frappe.ui.form.on('Site Backup', {
 										},
 										callback: function(r){
 											if (r.message == "console"){
-												let key = frappe.datetime.get_datetime_as_string();
-												console_dialog(key);
+												let timestamp = frappe.datetime.get_datetime_as_string();
+												console_dialog(timestamp);
 												frappe.call({
 													method: 'bench_manager.bench_manager.doctype.site_backup.site_backup.restore_backup',
 													args: {
@@ -74,14 +74,14 @@ frappe.ui.form.on('Site Backup', {
 														new_site_name: dialog_data.fields_dict.new_site_name.get_input_value(),
 														mysql_password: verification_dialog.fields_dict.mysql_password.value,
 														admin_password: verification_dialog.fields_dict.admin_password.value,
-														key: key
+														timestamp: timestamp
 													},
 													callback: function(){
 														dialog_data.hide();
 														verification_dialog.hide();
 													}
 												});
-											} 
+											}
 										}
 									});
 								});

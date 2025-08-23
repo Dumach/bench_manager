@@ -1,11 +1,11 @@
 # Bench Manager
 <img src="bench_manager/public/images/fa-gamepad.svg" width="250">
 
-Bench Manager is a graphical user interface to emulate the functionalities of Frappé Bench. Like the command line utility it helps you install apps, manage multiple sites, update apps and much more.
+Bench Manager is a graphical user interface to emulate the functionalities of Frappe Bench. Like the command line utility it helps you install apps, manage multiple sites, update apps and much more.
 
 ## Installation
 
-Create a new site called bench-manager.local and install Bench Manager on the site. 
+Create a new site called bench-manager.local and install Bench Manager on the site.
 
 ### Automated (preferred)
 
@@ -44,7 +44,7 @@ $ bench update
 
 #### App Catalogue
 
-There are 5 main doctypes associated with this app. 
+There are 5 main doctypes associated with this app.
 
 
 ### 1. Bench Settings
@@ -55,7 +55,7 @@ There are 5 main doctypes associated with this app.
   - Reads your bench instance, greps and loads all the backups onto the Site Backup doctype.
   - Reads, greps and populates the Site doctype with all the existing sitse in the current bench instance.
   - Reads, greps and populates all the installed apps in the App doctype.
-- The Bench setting doctype also displays all the config parameters in the common-site-config.json which is applicable to all 
+- The Bench setting doctype also displays all the config parameters in the common-site-config.json which is applicable to all
   the sites in your bench instance.
 
 ### 2. Site
@@ -65,8 +65,8 @@ There are 5 main doctypes associated with this app.
   1. Migrate
       * This button emulates the ```bench migrate``` command.
       * It applies schema changes and data migrations if any.
-      * Migrate should be run after you pull updates from any Frappé app.
-  2. Backup Site 
+      * Migrate should be run after you pull updates from any Frappe app.
+  2. Backup Site
       * This button backs up the site with all the files in it.
   3. Install App
       * On clicking this button a ui-dialog pops up where one can select and install any app onto the site.
@@ -79,7 +79,7 @@ There are 5 main doctypes associated with this app.
   7. View Site
       * Lets you directly access the site. At the click of a button, a new-tab is opened in your browser opening the site.
   8. Create Alias
-      * Create multiple sites all pointing to the same site, i.e. create multiple aliases for the site. 
+      * Create multiple sites all pointing to the same site, i.e. create multiple aliases for the site.
       * This can also be considered as an alternative to renaming a site.
   9. Delete Alias
       * Delete the aliases created.

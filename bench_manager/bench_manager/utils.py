@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2017, Frappé and contributors
+# Copyright (c) 2017, Frappe and contributors
 # For license information, please see license.txt
 
 
@@ -10,7 +9,7 @@ import frappe
 from frappe.model.document import Document
 
 
-def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=None):
+def run_command(commands, doctype, timestamp, cwd="..", docname=" ", after_command=None):
 	verify_whitelisted_call()
 	start_time = frappe.utils.time.time()
 	console_dump = ""
@@ -26,7 +25,7 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 	doc = frappe.get_doc(
 		{
 			"doctype": "Bench Manager Command",
-			"key": key,
+			"timestamp": timestamp,
 			"source": doctype + ": " + docname,
 			"command": logged_command,
 			"console": console_dump,
@@ -36,7 +35,7 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 	doc.insert()
 	frappe.db.commit()
 	frappe.publish_realtime(
-		key,
+		timestamp,
 		"Executing Command:\n{logged_command}\n\n".format(logged_command=logged_command),
 		user=frappe.session.user,
 	)
@@ -46,20 +45,20 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 				shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd
 			)
 			for c in iter(lambda: safe_decode(terminal.stdout.read(1)), ""):
-				frappe.publish_realtime(key, c, user=frappe.session.user)
+				frappe.publish_realtime(timestamp, c, user=frappe.session.user)
 				console_dump += str(c)
 		if terminal.wait():
 			_close_the_doc(
-				start_time, key, console_dump, status="Failed", user=frappe.session.user
+				start_time, timestamp, console_dump, status="Failed", user=frappe.session.user
 			)
 		else:
 			_close_the_doc(
-				start_time, key, console_dump, status="Success", user=frappe.session.user
+				start_time, timestamp, console_dump, status="Success", user=frappe.session.user
 			)
 	except Exception as e:
 		_close_the_doc(
 			start_time,
-			key,
+			timestamp,
 			"{} \n\n{}".format(e, console_dump),
 			status="Failed",
 			user=frappe.session.user,
@@ -76,7 +75,7 @@ def run_command(commands, doctype, key, cwd="..", docname=" ", after_command=Non
 		)
 
 
-def _close_the_doc(start_time, key, console_dump, status, user):
+def _close_the_doc(start_time, timestamp, console_dump, status, user):
 	time_taken = frappe.utils.time.time() - start_time
 	final_console_dump = ""
 	console_dump = console_dump.split("\n\r")
@@ -85,14 +84,14 @@ def _close_the_doc(start_time, key, console_dump, status, user):
 		final_console_dump += "\n" + i[-1]
 
 	# For Webhook to trigger using cmd.save()
-	cmd = frappe.get_doc("Bench Manager Command", key)
+	cmd = frappe.get_doc("Bench Manager Command", timestamp)
 	cmd.console = final_console_dump
 	cmd.status = status
 	cmd.time_taken = time_taken
 	cmd.save()
 
 	frappe.publish_realtime(
-		key,
+		timestamp,
 		"\n\n" + status + "!\nThe operation took " + str(time_taken) + " seconds",
 		user=user,
 	)

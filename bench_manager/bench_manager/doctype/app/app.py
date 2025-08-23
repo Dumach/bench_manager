@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-# Copyright (c) 2017, Frappé and contributors
+# Copyright (c) 2017, Frappe and contributors
 # For license information, please see license.txt
 
 
@@ -126,14 +125,14 @@ class App(Document):
 			)
 
 	@frappe.whitelist()
-	def pull_rebase(self, key, remote):
+	def pull_rebase(self, timestamp, remote):
 		remote, branch_name = remote.split("/")
 		self.console_command(
-			key=key, caller="pull-rebase", branch_name=branch_name, remote=remote
+			timestamp=timestamp, caller="pull-rebase", branch_name=branch_name, remote=remote
 		)
 
 	@frappe.whitelist()
-	def console_command(self, key, caller, branch_name=None, remote=None, commit_msg=None):
+	def console_command(self, timestamp, caller, branch_name=None, remote=None, commit_msg=None):
 		commands = {
 			"git_init": ["git init", "git add .", "git commit -m 'Initial Commit'"],
 			"switch_branch": ["git checkout {branch_name}".format(branch_name=branch_name)],
@@ -162,7 +161,7 @@ class App(Document):
 			commands=commands[caller],
 			cwd=os.path.join("..", "apps", self.name),
 			doctype=self.doctype,
-			key=key,
+			timestamp=timestamp,
 			docname=self.name,
 		)
 
