@@ -25,7 +25,7 @@ frappe.ui.form.on('App', {
 				}, () => {
 					setTimeout(() => { frm.save(); }, 5000);
 				});
-			});
+			}, "Manage");
 		} else {
 			frm.add_custom_button(__('Commit'), function(){
 				var dialog = new frappe.ui.Dialog({
@@ -46,7 +46,7 @@ frappe.ui.form.on('App', {
 					});
 				});
 				dialog.show();
-			});
+			}, "Manage");
 			frm.add_custom_button(__('Stash'), function(){
 				let key = frappe.datetime.get_datetime_as_string();
 				console_dialog(key);
@@ -54,7 +54,7 @@ frappe.ui.form.on('App', {
 					key: key,
 					caller: "stash"
 				});
-			});
+			}, "Manage");
 			frm.add_custom_button(__('Apply Stash'), function(){
 				let key = frappe.datetime.get_datetime_as_string();
 				console_dialog(key);
@@ -62,7 +62,7 @@ frappe.ui.form.on('App', {
 					key: key,
 					caller: "apply-stash"
 				});
-			});
+			}, "Manage");
 			frm.add_custom_button(__('Pull & Rebase'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_remotes',
@@ -90,7 +90,7 @@ frappe.ui.form.on('App', {
 						dialog.show();
 					}
 				});
-			});
+			}, "Manage");
 			frm.add_custom_button(__('Track Remote'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_remotes',
@@ -121,7 +121,7 @@ frappe.ui.form.on('App', {
 						dialog.show();
 					}
 				});
-			});
+			}, "Manage");
 			frm.add_custom_button(__('Switch Branch'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_branches',
@@ -155,7 +155,7 @@ frappe.ui.form.on('App', {
 						}
 					}
 				});
-			});
+			}, "Manage");
 			frm.add_custom_button(__('New Branch'), function(){
 				var dialog = new frappe.ui.Dialog({
 					title: 'Create New Branch',
@@ -175,7 +175,7 @@ frappe.ui.form.on('App', {
 					});
 				});
 				dialog.show();
-			});
+			}, "Manage");
 			frm.add_custom_button(__('Delete Branch'), function(){
 				frappe.call({
 					method: 'bench_manager.bench_manager.doctype.app.app.get_branches',
@@ -209,7 +209,7 @@ frappe.ui.form.on('App', {
 						}
 					}
 				});
-			});
+			}, "Manage");
 			frm.add_custom_button(__('Fetch'), function(){
 				let key = frappe.datetime.get_datetime_as_string();
 				console_dialog(key);
@@ -217,7 +217,7 @@ frappe.ui.form.on('App', {
 					key: key,
 					caller: "git_fetch"
 				});
-			});
+			}, "Manage");
 		}
 	}
 });
