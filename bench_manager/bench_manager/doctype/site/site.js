@@ -45,7 +45,7 @@ frappe.ui.form.on('Site', {
 				});
 			});
 			dialog.show();
-		});
+		}, "Site");
 		frm.add_custom_button(__('Delete Alias'), function(){
 			let alias_list = frm.doc.site_alias.split('\n');
 			alias_list.pop();
@@ -67,7 +67,7 @@ frappe.ui.form.on('Site', {
 				});
 			});
 			dialog.show();
-		});
+		}, "Site");
 		frm.add_custom_button(__('Migrate'), function() {
 			let timestamp = frappe.datetime.get_datetime_as_string();
 			console_dialog(timestamp);
@@ -75,7 +75,7 @@ frappe.ui.form.on('Site', {
 				timestamp: timestamp,
 				caller: 'migrate',
 			});
-		});
+		}, "Site");
 		frm.add_custom_button(__('Backup'), function() {
 			let timestamp = frappe.datetime.get_datetime_as_string();
 			console_dialog(timestamp);
@@ -83,7 +83,7 @@ frappe.ui.form.on('Site', {
 				timestamp: timestamp,
 				caller: 'backup',
 			});
-		});
+		}, "Site");
 		frm.add_custom_button(__('Reinstall'), function(){
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.pass_exists',
@@ -116,7 +116,7 @@ frappe.ui.form.on('Site', {
 					dialog.show();
 				}
 			});
-		});
+		}, "App");
 		frm.add_custom_button(__('Install App'), function(){
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.get_installable_apps',
@@ -146,7 +146,7 @@ frappe.ui.form.on('Site', {
 					dialog.show();
 				}
 			});
-		});
+		}, "App");
 		frm.add_custom_button(__('Uninstall App'), function(){
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.get_removable_apps',
@@ -176,7 +176,7 @@ frappe.ui.form.on('Site', {
 					dialog.show();
 				}
 			});
-		});
+		}, "App");
 		frm.add_custom_button(__('Drop Site'), function(){
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.pass_exists',
@@ -238,13 +238,13 @@ frappe.ui.form.on('Site', {
 					dialog.show();
 				}
 			});
-		});
+		}, "Site");
 		frm.add_custom_button(__('View Site'), () => {
 			frappe.db.get_value('Bench Settings', 'Bench Settings', 'webserver_port',
 				(r) => {
 					window.open(`http://${frm.doc.name}:${r.webserver_port}`, '_blank');
 				}
 			);
-		});
+		}, "Site");
 	}
 });

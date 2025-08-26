@@ -6,6 +6,7 @@ import os
 import re
 import shlex
 import time
+import tomllib
 from subprocess import PIPE, STDOUT, Popen, check_output
 
 import frappe
@@ -49,24 +50,17 @@ class App(Document):
 		"app_license",
 	]
 
-	def validate(self):
-		if self.get("__islocal"):
-			if self.developer_flag == 0:
-				frappe.throw("Creation of new apps is not supported at the moment!")
-			self.developer_flag = 0
-			app_data_path = os.path.join(
-				"..",
-				"apps",
-				self.app_name,
-				"{app_name}.egg-info".format(app_name=self.app_name),
-				"PKG-INFO",
-			)
-			while not os.path.isfile(app_data_path):
-				time.sleep(2)
-			self.update_app_details()
-		else:
-			if self.developer_flag == 0:
-				self.update_app_details()
+	## TODO rewrite validate infinte loop in time.sleep(2)
+
+	# def validate(self):
+		# if self.get("__islocal"):
+		# 	# if self.developer_flag == 0:
+		# 	# 	frappe.throw("Creation of new apps is not supported at the moment!")
+		# 	self.developer_flag = 0
+		# 	self.update_app_details()
+		# else:
+		# 	if self.developer_flag == 0:
+		# 		self.update_app_details()
 
 	def onload(self):
 		self.update_app_details()
@@ -101,50 +95,24 @@ class App(Document):
 				check_output(shlex.split("rm -r ../apps/{app_name}".format(app_name=self.app_name)))
 
 	def update_app_details(self):
-		pkg_info_file = os.path.join(
-			"..",
-			"apps",
-			self.app_name,
-			"{app_name}.egg-info".format(app_name=self.app_name),
-			"PKG-INFO",
-		)
-		if os.path.isfile(pkg_info_file):
-			app_data_path = pkg_info_file
-			with open(app_data_path, "r") as f:
-				app_data = f.readlines()
-			app_data = frappe.as_unicode("".join(app_data)).split("\n")
-			if "" in app_data:
-				app_data.remove("")
-			app_data = [x + "\n" for x in app_data]
-			for data in app_data:
-				if "Version:" in data:
-					self.version = "".join(re.findall("Version: (.*?)\\n", data))
-				elif "Summary:" in data:
-					self.app_description = "".join(re.findall("Summary: (.*?)\\n", data))
-				elif "Author:" in data:
-					self.app_publisher = "".join(re.findall("Author: (.*?)\\n", data))
-				elif "Author-email:" in data:
-					self.app_email = "".join(re.findall("Author-email: (.*?)\\n", data))
-			self.app_title = self.app_name
-			self.app_title = self.app_title.replace("-", " ")
-			self.app_title = self.app_title.replace("_", " ")
-			if os.path.isdir(os.path.join("..", "apps", self.app_name, ".git")):
-				self.current_git_branch = safe_decode(
-					check_output(
-						"git rev-parse --abbrev-ref HEAD".split(),
-						cwd=os.path.join("..", "apps", self.app_name),
-					)
-				).strip("\n")
-				self.is_git_repo = True
-			else:
-				self.current_git_branch = None
-				self.is_git_repo = False
-		else:
-			frappe.throw(
-				"Hey developer, the app you're trying to create an \
-				instance of doesn't actually exist. You could consider setting \
-				developer flag to 0 to actually create the app"
-			)
+		from frappe.utils.change_log import get_app_branch
+		from git import Repo
+		from git.exc import InvalidGitRepositoryError
+
+		hooks = frappe.get_hooks(app_name=self.app_name)
+		self.app_title = (hooks.get("app_title") or ["App Title"])[0]
+		self.app_publisher = (hooks.get("app_publisher") or ["App Publisher"])[0]
+		self.app_description = (hooks.get("app_description") or ["App Description"])[0]
+		self.app_email = (hooks.get("app_email") or ["App Email"])[0]
+		self.app_license = (hooks.get("app_license") or [""])[0]
+		self.app_color = (hooks.get("app_color") or [""])[0]
+		self.app_icon = (hooks.get("app_icon") or [""])[0]
+		# self.developer_flag developer_flag: DF.Int
+		self.is_git_repo = True
+
+		module = frappe.get_module(self.app_name)
+		self.current_git_branch = get_app_branch(self.app_name)
+		self.version = getattr(hooks, f"{self.current_git_branch}_version", None) or module.__version__
 
 	@frappe.whitelist()
 	def pull_rebase(self, timestamp, remote):
