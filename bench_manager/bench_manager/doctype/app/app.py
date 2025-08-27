@@ -50,8 +50,6 @@ class App(Document):
 		"app_license",
 	]
 
-	## TODO rewrite validate infinte loop in time.sleep(2)
-
 	# def validate(self):
 		# if self.get("__islocal"):
 		# 	# if self.developer_flag == 0:
@@ -75,25 +73,22 @@ class App(Document):
 		frappe.publish_realtime("Bench-Manager:reload-page")
 
 	def on_trash(self):
-		if self.developer_flag == 0:
-			frappe.throw("Not allowed!")
-		else:
-			apps_file = "apps.txt"
-			with open(apps_file, "r") as f:
-				apps = f.readlines()
-			try:
-				apps.remove(self.app_name)
-			except:
-				try:
-					apps.remove(self.app_name + "\n")
-				except:
-					pass
-			os.remove(apps_file)
-			with open(apps_file, "w") as f:
-				f.writelines(apps)
-			if self.app_name != "":
-				check_output(shlex.split("rm -r ../apps/{app_name}".format(app_name=self.app_name)))
+		from frappe.utils import now
+		try:
+			timestamp = now()
+			command = {"remove_app": ["bench remove-app {app_name}".format(app_name=self.app_name)]}
+			frappe.enqueue(
+				"bench_manager.bench_manager.utils.run_command",
+				commands=command,
+				cwd=os.path.join("..", "apps", self.name),
+				doctype=self.doctype,
+				timestamp=timestamp,
+				docname=self.name,
+			)
+		except Exception as e:
+			frappe.log_error(frappe.get_traceback(),e)
 
+	@frappe.whitelist()
 	def update_app_details(self):
 		from frappe.utils.change_log import get_app_branch
 		from git import Repo
@@ -113,6 +108,7 @@ class App(Document):
 		module = frappe.get_module(self.app_name)
 		self.current_git_branch = get_app_branch(self.app_name)
 		self.version = getattr(hooks, f"{self.current_git_branch}_version", None) or module.__version__
+
 
 	@frappe.whitelist()
 	def pull_rebase(self, timestamp, remote):

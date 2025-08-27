@@ -14,6 +14,9 @@ frappe.ui.form.on('App', {
 		app_fields.forEach(function(app_field) {
 			frm.set_df_property(app_field, "read_only", frm.doc.__islocal ? 0 : 1);
 		});
+		frm.add_custom_button(__("Update App Details"), function() {
+			frm.call("update_app_details");
+		})
 		if (frm.doc.is_git_repo != true) {
 			frm.add_custom_button(__("Git Init"), function(){
 				let key = frappe.datetime.get_datetime_as_string();

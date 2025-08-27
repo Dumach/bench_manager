@@ -3,31 +3,15 @@
 
 import json
 import os
+import re
 import shlex
 import sys
-from subprocess import PIPE, Popen, check_output
-from datetime import datetime,timedelta
 import traceback
-import frappe
-import frappe
-import shlex
-import re
-from subprocess import PIPE, STDOUT, Popen
-from bench_manager.bench_manager.utils import _close_the_doc
-from bench_manager.bench_manager.utils import safe_decode
+from datetime import datetime, timedelta
+from subprocess import PIPE, STDOUT, Popen, check_output
 from urllib.parse import parse_qs, urlparse
 
-import frappe
-from bench_manager.bench_manager.utils import (
-	safe_decode,
-	verify_whitelisted_call,
-)
-from frappe.model.document import Document
-import json
-import os
 import dropbox
-from rq.timeouts import JobTimeoutException
-
 import frappe
 from frappe import _
 from frappe.integrations.offsite_backup_utils import (
@@ -40,10 +24,16 @@ from frappe.model.document import Document
 from frappe.utils import (
 	cint,
 	encode,
-	get_url,
 	get_request_site_address,
 )
 from frappe.utils.background_jobs import enqueue
+from rq.timeouts import JobTimeoutException
+
+from bench_manager.bench_manager.utils import (
+	_close_the_doc,
+	safe_decode,
+	verify_whitelisted_call,
+)
 
 ignore_list = [".DS_Store"]
 

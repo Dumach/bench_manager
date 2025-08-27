@@ -27,6 +27,14 @@ frappe.ui.form.on('Site', {
 			$('div.form-inner-toolbar').show();
 		}
 
+		frm.add_custom_button(__('Visit Site'), () => {
+			frappe.db.get_value('Bench Settings', 'Bench Settings', 'webserver_port',
+				(r) => {
+					window.open(`http://${frm.doc.name}:${r.webserver_port}`, '_blank');
+				}
+			);
+		});
+
 		frm.add_custom_button(__('Create Alias'), function(){
 			var dialog = new frappe.ui.Dialog({
 				title: __('Alias name'),
@@ -121,6 +129,7 @@ frappe.ui.form.on('Site', {
 			frappe.call({
 				method: 'bench_manager.bench_manager.doctype.site.site.get_installable_apps',
 				args: {
+					site_name: frm.doc.site_name,
 					doctype: frm.doctype,
 					docname: frm.doc.name
 				},
@@ -238,13 +247,6 @@ frappe.ui.form.on('Site', {
 					dialog.show();
 				}
 			});
-		}, "Site");
-		frm.add_custom_button(__('View Site'), () => {
-			frappe.db.get_value('Bench Settings', 'Bench Settings', 'webserver_port',
-				(r) => {
-					window.open(`http://${frm.doc.name}:${r.webserver_port}`, '_blank');
-				}
-			);
 		}, "Site");
 	}
 });

@@ -7,8 +7,8 @@ import os
 import re
 import shlex
 import time
-from subprocess import PIPE, Popen, check_output
-
+from subprocess import PIPE, Popen, check_output, run
+import subprocess
 import frappe
 import pymysql
 from bench_manager.bench_manager.utils import (
@@ -231,14 +231,16 @@ class Site(Document):
 
 
 @frappe.whitelist()
-def get_installable_apps(doctype, docname):
+def get_installable_apps(site_name, doctype, docname):
 	verify_whitelisted_call()
-	app_list_file = "apps.txt"
-	with open(app_list_file, "r") as f:
-		apps = f.read().split("\n")
-	installed_apps = frappe.get_doc(doctype, docname).app_list.split("\n")
-	installable_apps = set(apps) - set(installed_apps)
-	return [x for x in installable_apps]
+	cmd = ["bench", "--site", site_name, "list-apps"]
+	result = subprocess.run(cmd, shell=False, capture_output=True, text=True, check=True)
+	# frappe    15.77.0 version-15
+	# orchestra 0.0.1   develop
+	result_list = result.stdout.strip().splitlines()
+	installed_apps = (element.split(' ')[0] for element in result_list)
+	installable_apps = set(frappe.get_all_apps()) - set(installed_apps)
+	return (x for x in installable_apps)
 
 
 @frappe.whitelist()
@@ -301,7 +303,7 @@ def verify_password(site_name, mysql_password):
 def create_site(site_name, install_erpnext, mysql_password, admin_password, timestamp, a_async=True):
 	verify_whitelisted_call()
 	commands = [
-		"bench new-site --mariadb-root-password {mysql_password} --admin-password {admin_password} --no-mariadb-socket {site_name}".format(
+		"bench new-site {site_name} --mariadb-root-password {mysql_password} --admin-password {admin_password}".format(
 			site_name=site_name, admin_password=admin_password, mysql_password=mysql_password
 		)
 	]
