@@ -94,7 +94,7 @@ frappe.ui.form.on('Bench Settings', {
 				}
 			});
 		});
-		frm.add_custom_button(__("Update"), function(){
+		frm.add_custom_button(__("Update Apps"), function(){
 			let timestamp = frappe.datetime.get_datetime_as_string();
 			console_dialog(timestamp);
 			frm.call("console_command", {
@@ -107,7 +107,7 @@ frappe.ui.form.on('Bench Settings', {
 				method: 'bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_all'
 			});
 		});
-		frm.add_custom_button("Reload", () => {
+		frm.add_custom_button("Reload nginx", () => {
 			frappe.prompt([
 	  {
 		  label: 'Root Password',

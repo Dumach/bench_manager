@@ -46,35 +46,33 @@ class SiteBackup(Document):
 
 	def on_trash(self):
 		if self.developer_flag == 0:
-			command = "rm ./{file_path}".format(file_path=self.file_path)
-			if os.path.isfile("{file_path}_database.sql".format(file_path=self.file_path)):
-				check_output(
-					shlex.split(
-						"{command}_database.sql".format(file_path=self.file_path, command=command)
-					),
-					cwd="..",
-				)
+			base_path = os.path.join("..", self.file_path)
+
+			# Remove database backup file
+			db_file = f"{base_path}-database.sql"
+			if os.path.isfile(db_file):
+				os.remove(db_file)
 			else:
-				check_output(
-					shlex.split(
-						"{command}_database.sql.gz".format(file_path=self.file_path, command=command)
-					),
-					cwd="..",
-				)
+				db_file_gz = f"{base_path}-database.sql.gz"
+				if os.path.isfile(db_file_gz):
+					os.remove(db_file_gz)
+
+			# Remove public files backup
 			if self.public_file_backup:
-				check_output(
-					shlex.split(
-						"{command}_files.tar".format(file_path=self.file_path, command=command)
-					),
-					cwd="..",
-				)
+				public_files = f"{base_path}-files.tar"
+				if os.path.isfile(public_files):
+					os.remove(public_files)
+
+			# Remove private files backup
 			if self.private_file_backup:
-				check_output(
-					shlex.split(
-						"{command}_private_files.tar".format(file_path=self.file_path, command=command)
-					),
-					cwd="..",
-				)
+				private_files = f"{base_path}-private-files.tar"
+				if os.path.isfile(private_files):
+					os.remove(private_files)
+
+			# Remove site-config
+			config_file = f"{base_path}-site_config_backup.json"
+			if os.path.isfile(config_file):
+				os.remove(config_file)
 
 
 @frappe.whitelist()

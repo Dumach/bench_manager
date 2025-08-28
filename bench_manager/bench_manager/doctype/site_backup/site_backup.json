@@ -85,7 +85,6 @@
   {
    "fieldname": "file_path",
    "fieldtype": "Data",
-   "hidden": 1,
    "label": "File Path",
    "read_only": 1
   },
@@ -99,7 +98,7 @@
  ],
  "in_create": 1,
  "links": [],
- "modified": "2025-08-28 13:17:51.277109",
+ "modified": "2025-08-28 18:21:18.195325",
  "modified_by": "Administrator",
  "module": "Bench Manager",
  "name": "Site Backup",

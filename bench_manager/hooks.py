@@ -162,14 +162,13 @@ scheduler_events = {
     "weekly_long":[
         "bench_manager.bench_manager.doctype.bench_settings.bench_settings.backup_sites_with_weekly_option",
         "bench_manager.bench_manager.doctype.bench_settings.bench_settings.dropbox_backup_sites_with_monthly_option"
-
-	]
+	],
 # 	"all": [
 # 		"bench_manager.tasks.all"
 # 	],
-# 	"daily": [
-# 		"bench_manager.tasks.daily"
-# 	],
+	"daily": [
+		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_backup"
+	],
 # 	"hourly": [
 # 		"bench_manager.tasks.hourly"
 # 	],

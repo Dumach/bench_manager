@@ -304,31 +304,28 @@ def update_backup_list():
 	backups = []
 	for site in all_sites:
 		backup_path = os.path.join(site, "private", "backups")
-		backup_files = (
-			safe_decode(
-				check_output(shlex.split("ls ./{backup_path}".format(backup_path=backup_path)))
-			)
-			.strip("\n")
-			.split("\n")
-		)
+		backup_files = os.listdir(backup_path)
+
 		backup_files = [file for file in backup_files if "database.sql" in file]
 		for backup_file in backup_files:
 			inner_response = {}
-			date_time_hash = backup_file.rsplit("-", 1)[0]
-			file_path = backup_path + "/" + date_time_hash
+			datetime_with_site = backup_file.rsplit("-", 1)[0]
+			file_path = backup_path + "/" + datetime_with_site
+
 			inner_response["site_name"] = site.split("/")[2]
 			inner_response["stored_location"] = site.split("/")[1]
 			inner_response["private_file_backup"] = os.path.isfile(
-				backup_path + "/" + date_time_hash + "_private_files.tar"
+				os.path.join(backup_path, f"{datetime_with_site}-private-files.tar")
 			)
 			inner_response["public_file_backup"] = os.path.isfile(
-				backup_path + "/" + date_time_hash + "_files.tar"
+				os.path.join(backup_path, f"{datetime_with_site}-files.tar")
 			)
 			inner_response["file_path"] = file_path[3:]
+
 			try:
-				inner_response["date"] = get_date(date_time_hash)
-				inner_response["time"] = get_time(date_time_hash)
-				inner_response["hash"] = get_hash(date_time_hash)
+				inner_response["date"] = get_date(datetime_with_site)
+				inner_response["time"] = get_time(datetime_with_site)
+				inner_response["hash"] = get_hash(datetime_with_site)
 			except IndexError as e:
 				inner_response["date"] = str(datetime.now().date())
 				inner_response["time"] = str(datetime.now().time())
@@ -477,7 +474,7 @@ def create_backup(site_list):
     """
     Discover and record Frappe's automatic backups instead of creating new ones.
     This prevents duplicate backups in Frappe v15 which already runs automatic backups.
-    
+
     Uses the existing sync_backups function to discover and record all backups.
     """
     try:
