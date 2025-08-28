@@ -113,3 +113,34 @@ def safe_decode(string, encoding="utf-8"):
 	except Exception:
 		pass
 	return string
+
+def update_site_config(key: str, value: str, site_name: str|None=None) -> None:
+	import os
+	from frappe.installer import update_site_config
+
+	if site_name:
+		site_config_path= os.path.join(os.getcwd(), site_name, "site_config.json")
+	else:
+		site_config_path = os.path.join(os.getcwd(), "common_site_config.json")
+
+	try:
+		update_site_config(key, value, site_config_path=site_config_path)
+	except Exception as e:
+		frappe.log_error(frappe.get_traceback(), e)
+
+
+# def toggle_maintenance_mode(state: bool) -> None:
+# 	company_sites = frappe.get_all("Site", fields=["site_name"], pluck="site_name")
+# 	for site in company_sites:
+		# update_site_config("maintenance_mode", "1" if (state) else "0", site)
+
+
+# def enable_maintenance_all_site():
+# 	toggle_maintenance_mode(True)
+
+# def disable_maintenance_all_site():
+# 	toggle_maintenance_mode(False)
+
+def resume_sites():
+	update_site_config("maintenance_mode", "0")
+	update_site_config("pause_scheduler", "0")

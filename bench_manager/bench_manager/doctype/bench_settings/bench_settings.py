@@ -146,10 +146,18 @@ class BenchSettings(Document):
 	@frappe.whitelist()
 	def console_command(self, timestamp, caller, app_name=None, branch_name=None):
 		commands = {
-			"bench_update": ["bench update"],
+			"bench_update": ["bench update --reset",
+				f"bench --site {frappe.local.site} execute bench_manager.bench_manager.utils.resume_sites"],
 			"switch_branch": [""],
 			"get-app": ["bench get-app {app_name}".format(app_name=app_name)],
 		}
+
+		# Reason: in developer mode you might have uncommitted changes that would be erased if updated wiht '--reset'
+		if caller and frappe.get_common_site_config()["developer_mode"]:
+			frappe.throw(_("Updating a site is not allowed when 'developer_mode' is ON in common_site_config." + "<br><br>" +
+				"Reason: in developer mode you might have uncommitted changes that would be erased if updated with '--reset'")
+			)
+
 		frappe.enqueue(
 			"bench_manager.bench_manager.utils.run_command",
 			commands=commands[caller],
