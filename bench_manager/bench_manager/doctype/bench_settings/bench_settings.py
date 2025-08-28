@@ -474,15 +474,18 @@ def dropbox_backup_sites_with_monthly_option():
         take_dropbox_backup(site_list)
 
 def create_backup(site_list):
-    from bench_manager.bench_manager.utils import run_command
-    for i in site_list:
-        site_doc = frappe.get_doc("Site",i.name)
-        timestamp = datetime.now() + timedelta(seconds=1)
-        commands=["bench --site {site_name} backup --with-files".format(site_name=i.name)]
-        doctype=site_doc.doctype
-        timestamp=timestamp.strftime("%Y/%m/%d, %H:%M:%S")
-        docname=i.name
-        run_command(commands, doctype, timestamp, docname)
+    """
+    Discover and record Frappe's automatic backups instead of creating new ones.
+    This prevents duplicate backups in Frappe v15 which already runs automatic backups.
+    
+    Uses the existing sync_backups function to discover and record all backups.
+    """
+    try:
+        # Use the existing comprehensive backup sync function
+        sync_backups()
+        frappe.logger().info(f"Successfully discovered backups for {len(site_list)} sites")
+    except Exception as e:
+        frappe.log_error(f"Failed to sync backups: {str(e)}")
 
 
 def take_dropbox_backup(site_list):

@@ -28,6 +28,7 @@ class Site(Document):
 
 		app_list: DF.Text | None
 		auto_backup: DF.Check
+		backup_limit: DF.Int
 		backup_size: DF.Float
 		bench_settings: DF.Data | None
 		database_size: DF.Float
@@ -40,25 +41,24 @@ class Site(Document):
 		emails: DF.Data | None
 		expiry: DF.Data | None
 		files_size: DF.Float
-		frequency: DF.Literal["", "Daily", "Weekly", "Monthly"]
 		install_erpnext: DF.Check
-		maintenance_mode: DF.Data | None
-		pause_scheduler: DF.Data | None
+		maintenance_mode: DF.Check
+		pause_scheduler: DF.Check
 		site_alias: DF.Text | None
 		site_name: DF.Data
 		space: DF.Data | None
 		total: DF.Float
 	# end: auto-generated types
-	site_config_fields = [
+	site_config_fields = (
 		"maintenance_mode",
 		"pause_scheduler",
 		"db_name",
 		"db_password",
 		"developer_mode",
-		"disable_website_cache" "limits",
-	]
-	limits_fields = ["emails", "expiry", "space", "space_usage"]
-	space_usage_fields = ["backup_size", "database_size", "files_size", "total"]
+		"disable_website_cache", "limits",
+	)
+	limits_fields = ("emails", "expiry", "space", "space_usage")
+	space_usage_fields = ("backup_size", "database_size", "files_size", "total")
 
 	def get_attr(self, varname):
 		return getattr(self, varname)
@@ -67,21 +67,29 @@ class Site(Document):
 		return setattr(self, varname, varval)
 
 	def validate(self):
-		if self.get("__islocal"):
-			if self.developer_flag == 0:
-				self.create_site(self.timestamp)
-			site_config_path = self.site_name + "/site_config.json"
-			while not os.path.isfile(site_config_path):
-				time.sleep(2)
-			self.sync_site_config()
-			self.app_list = "frappe"
-		else:
-			if self.developer_flag == 0:
-				self.update_site_config()
-				self.sync_site_config()
+		self.update_configs()
+		self.sync_configs()
+
+	def on_update(self):
+		commands = []
+		if self.auto_backup:
+			commands.append("bench --site {site_name} execute frappe.db.set_single_value --args \"['System Settings','backup_limit',{backup_limit}]\""
+				.format(site_name=self.site_name, backup_limit=self.backup_limit))
+
+
+		if len(commands) > 0:
+			timestamp = frappe.utils.now()
+			frappe.enqueue(
+				"bench_manager.bench_manager.utils.run_command",
+				commands=commands,
+				doctype=self.doctype,
+				timestamp=timestamp,
+				docname=self.name,
+			)
 
 	def after_command(self, commands=None):
 		frappe.publish_realtime("Bench-Manager:reload-page")
+		pass
 
 	@frappe.whitelist()
 	def update_app_alias(self):
@@ -114,66 +122,25 @@ class Site(Document):
 			list_apps = "frappe"
 		return safe_decode(list_apps).strip("\n").split("\n")
 
-	def update_site_config(self):
-		site_config_path = os.path.join(self.site_name, "site_config.json")
-		common_site_config_path = os.path.join("common_site_config.json")
+	def update_configs(self):
+		from bench_manager.bench_manager.utils import update_site_config
 
-		with open(site_config_path, "r") as f:
-			site_config_data = json.load(f)
-		with open(common_site_config_path, "r") as f:
-			common_site_config_data = json.load(f)
-
-		editable_site_config_fields = [
+		EDITABLE_SITE_CONFIG_FIELDS = (
 			"maintenance_mode",
 			"pause_scheduler",
 			"developer_mode",
 			"disable_website_cache",
-		]
+		)
 
-		for site_config_field in editable_site_config_fields:
-			if (
-				self.get_attr(site_config_field) == None or self.get_attr(site_config_field) == ""
-			):
-				if site_config_data.get(site_config_field) != None:
-					site_config_data.pop(site_config_field)
-				self.set_attr(site_config_field, common_site_config_data.get(site_config_field))
+		for field in EDITABLE_SITE_CONFIG_FIELDS:
+			value = str(self.get(field, 0))
+			update_site_config(field, value, self.site_name)
 
-			elif (
-				not common_site_config_data.get(site_config_field)
-				or self.get_attr(site_config_field) != common_site_config_data[site_config_field]
-			):
-				site_config_data[site_config_field] = self.get_attr(site_config_field)
-
-			elif self.get_attr(site_config_field) == common_site_config_data[site_config_field]:
-				if site_config_data.get(site_config_field) != None:
-					site_config_data.pop(site_config_field)
-
-			os.remove(site_config_path)
-			with open(site_config_path, "w") as f:
-				json.dump(site_config_data, f, indent=4)
-
-	def sync_site_config(self):
-		if os.path.isfile(self.site_name + "/site_config.json"):
-			site_config_path = self.site_name + "/site_config.json"
-			with open(site_config_path, "r") as f:
-				site_config_data = json.load(f)
-				for site_config_field in self.site_config_fields:
-					if site_config_data.get(site_config_field):
-						self.set_attr(site_config_field, site_config_data[site_config_field])
-
-				if site_config_data.get("limits"):
-					for limits_field in self.limits_fields:
-						if site_config_data.get("limits").get(limits_field):
-							self.set_attr(limits_field, site_config_data["limits"][limits_field])
-
-					if site_config_data.get("limits").get("space_usage"):
-						for space_usage_field in self.space_usage_fields:
-							if site_config_data.get("limits").get("space_usage").get(space_usage_field):
-								self.set_attr(
-									space_usage_field, site_config_data["limits"]["space_usage"][space_usage_field]
-								)
-		else:
-			frappe.throw("The site you're trying to access doesn't actually exist.")
+	def sync_configs(self):
+		config = frappe.get_site_config(site_path=os.path.join(os.getcwd(), self.site_name))
+		for field in self.site_config_fields:
+			value = config.get(field)
+			self.set(field, value)
 
 	@frappe.whitelist()
 	def create_alias(self, timestamp, alias):
@@ -185,8 +152,7 @@ class Site(Document):
 
 	@frappe.whitelist()
 	def console_command(
-		self, timestamp, caller, alias=None, app_name=None, admin_password=None, mysql_password=None
-	):
+		self, timestamp, caller, alias=None, app_name=None, admin_password=None, mysql_password=None):
 		site_abspath = None
 		if alias:
 			site_abspath = os.path.abspath(os.path.join(self.name))
@@ -315,9 +281,10 @@ def create_site(site_name, install_erpnext, mysql_password, admin_password, time
 		commands.append(
 			"bench --site {site_name} install-app erpnext".format(site_name=site_name)
 		)
-		commands.append(f"bench --site {site_name} migrate".format(site_name=site_name))
+		commands.append("bench --site {site_name} migrate".format(site_name=site_name))
+
 	frappe.enqueue(
-		"bench_manager.bench_manager.doctype.site.site.jop_site_creation",
+		"bench_manager.bench_manager.doctype.site.site.job_site_creation",
 		commands=commands,
 		doctype="Bench Settings",
 		timestamp=timestamp,
@@ -325,7 +292,7 @@ def create_site(site_name, install_erpnext, mysql_password, admin_password, time
 		is_async = a_async
 	)
 
-def jop_site_creation(commands, doctype, timestamp,site_name):
+def job_site_creation(commands, doctype, timestamp,site_name):
     from bench_manager.bench_manager.utils import run_command
     run_command(commands=commands,doctype="Bench Settings",timestamp=timestamp)
     sync_sites()
