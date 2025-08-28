@@ -17,6 +17,13 @@ What all it does:
 2. Gets the `bench_manager` app from https://github.com/frappe/bench_manager if it doesn't exist already
 3. Installs the bench_manager app on the site bench-manager.local
 
+## TODO:
+ - [x] set backup count automatically, extra configs only applied after setup wizard is finished
+ - [x] add `backup_limit` field if auto backup is enabled
+ - [ ] `bench update --reset` try
+ - [x] site settings: maitnenace mode, scheduler setting not working, **futher investigation needed**
+ - [ ] updating site_config in `utils.py`, may need to use to negate effect of failed `bench update`
+
 ### Manual
 
 ```
