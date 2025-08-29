@@ -3,34 +3,49 @@
 
 frappe.ui.form.on('Bench Settings', {
 	onload: function(frm) {
-		if (frm.doc.__islocal != 1) frm.save();
-		let site_config_fields = ["background_workers", "shallow_clone", "admin_password",
-			"auto_email_id", "auto_update", "frappe_user", "global_help_setup",
-			"gunicorn_workers", "github_username",
-			"github_password", "mail_login", "mail_password", "mail_port", "mail_server",
-			"use_tls", "rebase_on_pull", "redis_cache", "redis_queue", "redis_socketio",
-			"restart_supervisor_on_update", "root_password", "serve_default_site",
-			"socketio_port", "update_bench_on_update", "webserver_port", "developer_mode",
-			"file_watcher_port"];
-		site_config_fields.forEach(function(val){
-			frm.toggle_display(val, frm.doc[val] != undefined);
-		});
+		// if (frm.doc.__islocal != 1) frm.save();
+		// let site_config_fields = ["background_workers", "shallow_clone", "admin_password",
+		// 	"auto_email_id", "auto_update", "frappe_user", "global_help_setup",
+		// 	"gunicorn_workers", "github_username",
+		// 	"github_password", "mail_login", "mail_password", "mail_port", "mail_server",
+		// 	"use_tls", "rebase_on_pull", "redis_cache", "redis_queue", "redis_socketio",
+		// 	"restart_supervisor_on_update", "root_password", "serve_default_site",
+		// 	"socketio_port", "update_bench_on_update", "webserver_port", "developer_mode",
+		// 	"file_watcher_port"];
+		// site_config_fields.forEach(function(val){
+		// 	frm.toggle_display(val, frm.doc[val] != undefined);
+		// });
 	},
 	refresh: function(frm) {
 		frm.add_custom_button(__("Get App"), function(){
 			var dialog = new frappe.ui.Dialog({
 				title: 'App Name',
 				fields: [
-					{fieldname: 'app_name', fieldtype: 'Data', reqd:true, label: 'Name of the frappe repo hosted on github'}
+					{fieldname: 'app_name', fieldtype: 'Data', reqd:true, label: 'Name of the frappe repo hosted on github'},
+					{fieldname: 'username', fieldtype: 'Data', reqd:false, label: 'Username on github if email, than urlencode first'},
+					{fieldname: 'password', fieldtype: 'Password', reqd:false, label: 'Github access token'}
 				]
 			});
+
 			dialog.set_primary_action(__("Get App"), () => {
 				let timestamp = frappe.datetime.get_datetime_as_string();
+				let url = dialog.fields_dict.app_name.value.trim() || ""
+
+				// Using private repo, reconstructing app_name into url
+				if (dialog.fields_dict.username.value && dialog.fields_dict.password.value){
+					const username = dialog.fields_dict.username.value.trim()
+					const password = dialog.fields_dict.password.value.trim()
+
+					// remove https first
+					url = url.replace("https://", "")
+					url = `https://${username}:${password}@${url}`
+				}
+
 				console_dialog(timestamp);
 				frm.call("console_command", {
 					timestamp: timestamp,
 					caller: 'get-app',
-					app_name: dialog.fields_dict.app_name.value
+					app_name: url
 				}, () => {
 					dialog.hide();
 				});

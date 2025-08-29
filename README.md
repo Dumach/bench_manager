@@ -21,8 +21,8 @@ What all it does:
  - [x] set backup count automatically, extra configs only applied after setup wizard is finished
  - [x] add `backup_limit` field if auto backup is enabled
  - [x] site settings: maitnenace mode, scheduler setting not working, **futher investigation needed**
- - [ ] `bench update --reset` try
- - [ ] updating site_config in `utils.py`, may need to use to negate effect of failed `bench update`
+ - [x] `bench update --reset` try
+ - [x] updating site_config in `utils.py`, may need to use to negate effect of failed `bench update`
 
 ### Manual
 
