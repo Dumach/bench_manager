@@ -37,10 +37,7 @@
   "dropbox_access_key",
   "dropbox_access_secret",
   "github_settings",
-  "github_username",
   "shallow_clone",
-  "section_break_37",
-  "github_password",
   "mail_settings",
   "mail_port",
   "mail_server",
@@ -107,6 +104,7 @@
    "label": "Global Help Setup"
   },
   {
+   "description": "2 * CPU cores + 1",
    "fieldname": "gunicorn_workers",
    "fieldtype": "Int",
    "label": "Gunicorn Workers",
@@ -124,6 +122,7 @@
   },
   {
    "default": "0",
+   "description": "Connect Email via TLS",
    "fieldname": "use_tls",
    "fieldtype": "Check",
    "label": "Use TLS"
@@ -194,24 +193,10 @@
    "label": "Github Settings"
   },
   {
-   "fieldname": "github_username",
-   "fieldtype": "Data",
-   "label": "Github Username"
-  },
-  {
    "default": "0",
    "fieldname": "shallow_clone",
    "fieldtype": "Check",
    "label": "Shallow Clone"
-  },
-  {
-   "fieldname": "section_break_37",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "github_password",
-   "fieldtype": "Password",
-   "label": "Github Password"
   },
   {
    "fieldname": "mail_settings",
@@ -341,7 +326,7 @@
  ],
  "issingle": 1,
  "links": [],
- "modified": "2025-08-23 13:44:01.742481",
+ "modified": "2025-08-29 10:18:31.478927",
  "modified_by": "Administrator",
  "module": "Bench Manager",
  "name": "Bench Settings",

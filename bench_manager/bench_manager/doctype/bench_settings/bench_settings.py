@@ -60,8 +60,6 @@ class BenchSettings(Document):
 		file_watcher_port: DF.Int
 		frappe_git_branch: DF.Data | None
 		frappe_user: DF.Data | None
-		github_password: DF.Password | None
-		github_username: DF.Data | None
 		global_help_setup: DF.Data | None
 		gunicorn_workers: DF.Int
 		last_sync_timestamp: DF.Float
@@ -86,6 +84,7 @@ class BenchSettings(Document):
 		webserver_port: DF.Int
 	# end: auto-generated types
 	site_config_fields = [
+		"gunicorn_workers",
 		"background_workers",
 		"shallow_clone",
 		"admin_password",
@@ -95,7 +94,6 @@ class BenchSettings(Document):
 		"global_help_setup",
 		"dropbox_access_key",
 		"dropbox_secret_key",
-		"gunicorn_workers",
 		"github_username",
 		"github_password",
 		"mail_login",
@@ -119,12 +117,51 @@ class BenchSettings(Document):
 	def set_attr(self, varname, varval):
 		return setattr(self, varname, varval)
 
+	def onload(self):
+		self.sync_site_config()
+
 	def validate(self):
+		self.update_configs()
 		self.sync_site_config()
 		self.update_git_details()
 		current_time = frappe.utils.time.time()
 		if current_time - self.last_sync_timestamp > 10 * 60:
 			sync_all(in_background=True)
+
+	def update_configs(self):
+		from bench_manager.bench_manager.utils import update_site_config
+
+		EDITABLE_SITE_CONFIG_FIELDS = (
+			"shallow_clone",
+			"admin_password",
+			"auto_email_id",
+			"auto_update",
+			"global_help_setup",
+			"dropbox_access_key",
+			"dropbox_secret_key",
+			"github_username",
+			"github_password",
+			"mail_login",
+			"mail_password",
+			"mail_port",
+			"mail_server",
+			"use_tls",
+			"rebase_on_pull",
+			"redis_cache",
+			"redis_queue",
+			"redis_socketio",
+			"restart_supervisor_on_update",
+			"root_password",
+			"serve_default_site",
+			"socketio_port",
+			"update_bench_on_update",
+			"webserver_port",
+			"file_watcher_port",
+		)
+
+		for field in EDITABLE_SITE_CONFIG_FIELDS:
+			value = str(self.get(field, 0))
+			update_site_config(field, value)
 
 	def sync_site_config(self):
 		common_site_config_path = "common_site_config.json"
@@ -152,8 +189,7 @@ class BenchSettings(Document):
 			"get-app": ["bench get-app {app_name}".format(app_name=app_name)],
 		}
 
-		# Reason: in developer mode you might have uncommitted changes that would be erased if updated wiht '--reset'
-		if caller and frappe.get_common_site_config()["developer_mode"]:
+		if ("bench_update" in caller) and (frappe.get_common_site_config()["developer_mode"]):
 			frappe.throw(_("Updating a site is not allowed when 'developer_mode' is ON in common_site_config." + "<br><br>" +
 				"Reason: in developer mode you might have uncommitted changes that would be erased if updated with '--reset'")
 			)

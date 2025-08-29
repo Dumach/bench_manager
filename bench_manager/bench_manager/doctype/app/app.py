@@ -76,7 +76,7 @@ class App(Document):
 		from frappe.utils import now
 		try:
 			timestamp = now()
-			command = {"remove_app": ["bench remove-app {app_name}".format(app_name=self.app_name)]}
+			command = ["bench remove-app {app_name}".format(app_name=self.app_name)]
 			frappe.enqueue(
 				"bench_manager.bench_manager.utils.run_command",
 				commands=command,
@@ -108,6 +108,8 @@ class App(Document):
 		module = frappe.get_module(self.app_name)
 		self.current_git_branch = get_app_branch(self.app_name)
 		self.version = getattr(hooks, f"{self.current_git_branch}_version", None) or module.__version__
+		self.save()
+		frappe.db.commit()
 
 
 	@frappe.whitelist()

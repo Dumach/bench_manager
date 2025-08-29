@@ -9,6 +9,7 @@ frappe.ui.form.on('App', {
 	refresh: function(frm) {
 		if (frm.doc.version == undefined) $('div.form-inner-toolbar').hide();
 		else $('div.form-inner-toolbar').show();
+
 		let app_fields = ["app_title", "version", "app_description", "app_publisher", "app_email",
 			"app_icon", "app_color", "app_license"];
 		app_fields.forEach(function(app_field) {
