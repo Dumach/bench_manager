@@ -151,24 +151,22 @@ app_include_js = "/assets/bench_manager/js/bench_manager.js"
 # ---------------
 
 scheduler_events = {
-    "weekly_long":[
-        "bench_manager.bench_manager.doctype.bench_settings.bench_settings.create_weekly_backups"
+	"weekly_long": [
+		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.create_weekly_backups"
 	],
-# 	"all": [
-# 		"bench_manager.tasks.all"
-# 	],
-#	 "daily": [
-#	 	"bench_manager.tasks.daily"
-#	 ],
-	"hourly": [
-		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.discover_backups"
-	],
-# 	"weekly": [
-# 		"bench_manager.tasks.weekly"
-# 	]
-# 	"monthly": [
-# 		"bench_manager.tasks.monthly"
-# 	]
+	# 	"all": [
+	# 		"bench_manager.tasks.all"
+	# 	],
+	# "daily": [
+	# "bench_manager.tasks.daily"
+	# ],
+	"hourly": ["bench_manager.bench_manager.doctype.bench_settings.bench_settings.discover_backups"],
+	# 	"weekly": [
+	# 		"bench_manager.tasks.weekly"
+	# 	]
+	# 	"monthly": [
+	# 		"bench_manager.tasks.monthly"
+	# 	]
 }
 
 # Testing

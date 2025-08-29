@@ -6,15 +6,16 @@ import os
 import re
 import shlex
 import time
-import tomllib
 from subprocess import PIPE, STDOUT, Popen, check_output
 
 import frappe
+import tomllib
+from frappe.model.document import Document
+
 from bench_manager.bench_manager.utils import (
 	safe_decode,
 	verify_whitelisted_call,
 )
-from frappe.model.document import Document
 
 
 class App(Document):
@@ -40,7 +41,7 @@ class App(Document):
 		is_git_repo: DF.Check
 		version: DF.Data | None
 	# end: auto-generated types
-	app_info_fields = [
+	app_info_fields = (
 		"app_title",
 		"app_description",
 		"app_publisher",
@@ -48,17 +49,17 @@ class App(Document):
 		"app_icon",
 		"app_color",
 		"app_license",
-	]
+	)
 
 	# def validate(self):
-		# if self.get("__islocal"):
-		# 	# if self.developer_flag == 0:
-		# 	# 	frappe.throw("Creation of new apps is not supported at the moment!")
-		# 	self.developer_flag = 0
-		# 	self.update_app_details()
-		# else:
-		# 	if self.developer_flag == 0:
-		# 		self.update_app_details()
+	# if self.get("__islocal"):
+	# 	# if self.developer_flag == 0:
+	# 	# 	frappe.throw("Creation of new apps is not supported at the moment!")
+	# 	self.developer_flag = 0
+	# 	self.update_app_details()
+	# else:
+	# 	if self.developer_flag == 0:
+	# 		self.update_app_details()
 
 	def onload(self):
 		self.update_app_details()
@@ -74,9 +75,10 @@ class App(Document):
 
 	def on_trash(self):
 		from frappe.utils import now
+
 		try:
 			timestamp = now()
-			command = ["bench remove-app {app_name}".format(app_name=self.app_name)]
+			command = [f"bench remove-app {self.app_name}"]
 			frappe.enqueue(
 				"bench_manager.bench_manager.utils.run_command",
 				commands=command,
@@ -86,7 +88,7 @@ class App(Document):
 				docname=self.name,
 			)
 		except Exception as e:
-			frappe.log_error(frappe.get_traceback(),e)
+			frappe.log_error(frappe.get_traceback(), e)
 
 	@frappe.whitelist()
 	def update_app_details(self):
@@ -111,7 +113,6 @@ class App(Document):
 		self.save()
 		frappe.db.commit()
 
-
 	@frappe.whitelist()
 	def pull_rebase(self, timestamp, remote):
 		remote, branch_name = remote.split("/")
@@ -123,23 +124,15 @@ class App(Document):
 	def console_command(self, timestamp, caller, branch_name=None, remote=None, commit_msg=None):
 		commands = {
 			"git_init": ["git init", "git add .", "git commit -m 'Initial Commit'"],
-			"switch_branch": ["git checkout {branch_name}".format(branch_name=branch_name)],
-			"new_branch": ["git branch {branch_name}".format(branch_name=branch_name)],
-			"delete_branch": ["git branch -D {branch_name}".format(branch_name=branch_name)],
+			"switch_branch": [f"git checkout {branch_name}"],
+			"new_branch": [f"git branch {branch_name}"],
+			"delete_branch": [f"git branch -D {branch_name}"],
 			"git_fetch": ["git fetch --all"],
-			"track-remote": [
-				"git checkout -b {branch_name} -t {remote}".format(
-					branch_name=branch_name, remote=remote
-				)
-			],
-			"pull-rebase": [
-				"git pull --rebase {remote} {branch_name}".format(
-					branch_name=branch_name, remote=remote
-				)
-			],
+			"track-remote": [f"git checkout -b {branch_name} -t {remote}"],
+			"pull-rebase": [f"git pull --rebase {remote} {branch_name}"],
 			"commit": [
 				"git add .",
-				'git commit -m "{commit_msg}"'.format(commit_msg=commit_msg),
+				f'git commit -m "{commit_msg}"',
 			],
 			"stash": ["git add .", "git stash"],
 			"apply-stash": ["git stash apply"],
@@ -168,9 +161,7 @@ def get_branches(doctype, docname, current_branch):
 def get_remotes(docname):
 	command = "git branch -r"
 	remotes = (
-		safe_decode(
-			check_output(shlex.split(command), cwd=os.path.join("..", "apps", docname))
-		)
+		safe_decode(check_output(shlex.split(command), cwd=os.path.join("..", "apps", docname)))
 		.strip("\n")
 		.split("\n  ")
 	)

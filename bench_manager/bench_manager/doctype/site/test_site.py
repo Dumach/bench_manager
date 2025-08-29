@@ -2,8 +2,9 @@
 # See license.txt
 
 
-import frappe
 import unittest
+
+import frappe
 
 
 class TestSite(unittest.TestCase):

@@ -5,6 +5,7 @@
 import re
 import shlex
 from subprocess import PIPE, STDOUT, Popen
+
 import frappe
 from frappe.model.document import Document
 
@@ -14,14 +15,10 @@ def run_command(commands, doctype, timestamp, cwd="..", docname=" ", after_comma
 	start_time = frappe.utils.time.time()
 	console_dump = ""
 	logged_command = " && ".join(commands)
-	logged_command += (
-		" "  # to make sure passwords at the end of the commands are also hidden
-	)
+	logged_command += " "  # to make sure passwords at the end of the commands are also hidden
 	sensitive_data = ["--mariadb-root-password", "--admin-password", "--root-password"]
 	for password in sensitive_data:
-		logged_command = re.sub(
-			"{password} .*? ".format(password=password), "", logged_command, flags=re.DOTALL
-		)
+		logged_command = re.sub(f"{password} .*? ", "", logged_command, flags=re.DOTALL)
 	doc = frappe.get_doc(
 		{
 			"doctype": "Bench Manager Command",
@@ -36,30 +33,24 @@ def run_command(commands, doctype, timestamp, cwd="..", docname=" ", after_comma
 	frappe.db.commit()
 	frappe.publish_realtime(
 		timestamp,
-		"Executing Command:\n{logged_command}\n\n".format(logged_command=logged_command),
+		f"Executing Command:\n{logged_command}\n\n",
 		user=frappe.session.user,
 	)
 	try:
 		for command in commands:
-			terminal = Popen(
-				shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd
-			)
+			terminal = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd)
 			for c in iter(lambda: safe_decode(terminal.stdout.read(1)), ""):
 				frappe.publish_realtime(timestamp, c, user=frappe.session.user)
 				console_dump += str(c)
 		if terminal.wait():
-			_close_the_doc(
-				start_time, timestamp, console_dump, status="Failed", user=frappe.session.user
-			)
+			_close_the_doc(start_time, timestamp, console_dump, status="Failed", user=frappe.session.user)
 		else:
-			_close_the_doc(
-				start_time, timestamp, console_dump, status="Success", user=frappe.session.user
-			)
+			_close_the_doc(start_time, timestamp, console_dump, status="Success", user=frappe.session.user)
 	except Exception as e:
 		_close_the_doc(
 			start_time,
 			timestamp,
-			"{} \n\n{}".format(e, console_dump),
+			f"{e} \n\n{console_dump}",
 			status="Failed",
 			user=frappe.session.user,
 		)
@@ -114,12 +105,14 @@ def safe_decode(string, encoding="utf-8"):
 		pass
 	return string
 
-def update_site_config(key: str, value: str, site_name: str|None=None) -> None:
+
+def update_site_config(key: str, value: str, site_name: str | None = None) -> None:
 	import os
+
 	from frappe.installer import update_site_config
 
 	if site_name:
-		site_config_path= os.path.join(os.getcwd(), site_name, "site_config.json")
+		site_config_path = os.path.join(os.getcwd(), site_name, "site_config.json")
 	else:
 		site_config_path = os.path.join(os.getcwd(), "common_site_config.json")
 
@@ -132,7 +125,7 @@ def update_site_config(key: str, value: str, site_name: str|None=None) -> None:
 # def toggle_maintenance_mode(state: bool) -> None:
 # 	company_sites = frappe.get_all("Site", fields=["site_name"], pluck="site_name")
 # 	for site in company_sites:
-		# update_site_config("maintenance_mode", "1" if (state) else "0", site)
+# update_site_config("maintenance_mode", "1" if (state) else "0", site)
 
 
 # def enable_maintenance_all_site():
@@ -140,6 +133,7 @@ def update_site_config(key: str, value: str, site_name: str|None=None) -> None:
 
 # def disable_maintenance_all_site():
 # 	toggle_maintenance_mode(False)
+
 
 def resume_sites():
 	update_site_config("maintenance_mode", "0")

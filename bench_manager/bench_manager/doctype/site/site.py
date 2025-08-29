@@ -6,17 +6,21 @@ import json
 import os
 import re
 import shlex
+import subprocess
 import time
 from subprocess import PIPE, Popen, check_output, run
-import subprocess
+
 import frappe
 import pymysql
+from frappe.model.document import Document
+
+from bench_manager.bench_manager.doctype.bench_settings.bench_settings import sync_sites
 from bench_manager.bench_manager.utils import (
 	safe_decode,
 	verify_whitelisted_call,
 )
-from frappe.model.document import Document
-from bench_manager.bench_manager.doctype.bench_settings.bench_settings import sync_sites
+
+
 class Site(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -55,7 +59,8 @@ class Site(Document):
 		"db_name",
 		"db_password",
 		"developer_mode",
-		"disable_website_cache", "limits",
+		"disable_website_cache",
+		"limits",
 	)
 	limits_fields = ("emails", "expiry", "space", "space_usage")
 	space_usage_fields = ("backup_size", "database_size", "files_size", "total")
@@ -73,9 +78,9 @@ class Site(Document):
 	def on_update(self):
 		commands = []
 		if self.auto_backup:
-			commands.append("bench --site {site_name} execute frappe.db.set_single_value --args \"['System Settings','backup_limit',{backup_limit}]\""
-				.format(site_name=self.site_name, backup_limit=self.backup_limit))
-
+			commands.append(
+				f"bench --site {self.site_name} execute frappe.db.set_single_value --args \"['System Settings','backup_limit',{self.backup_limit}]\""
+			)
 
 		if len(commands) > 0:
 			timestamp = frappe.utils.now()
@@ -114,7 +119,7 @@ class Site(Document):
 			list_apps = "frappe"
 		else:
 			list_apps = check_output(
-				shlex.split("bench --site {site_name} list-apps".format(site_name=self.site_name)),
+				shlex.split(f"bench --site {self.site_name} list-apps"),
 				cwd="..",
 			)
 
@@ -152,39 +157,20 @@ class Site(Document):
 
 	@frappe.whitelist()
 	def console_command(
-		self, timestamp, caller, alias=None, app_name=None, admin_password=None, mysql_password=None):
+		self, timestamp, caller, alias=None, app_name=None, admin_password=None, mysql_password=None
+	):
 		site_abspath = None
 		if alias:
 			site_abspath = os.path.abspath(os.path.join(self.name))
 		commands = {
-			"migrate": ["bench --site {site_name} migrate".format(site_name=self.name)],
-			"create-alias": [
-				"ln -s {site_abspath} sites/{alias}".format(site_abspath=site_abspath, alias=alias)
-			],
-			"delete-alias": ["rm sites/{alias}".format(alias=alias)],
-			"backup": [
-				"bench --site {site_name} backup --with-files".format(site_name=self.name)
-			],
-			"reinstall": [
-				"bench --site {site_name} reinstall --yes --admin-password {admin_password}".format(
-					site_name=self.name, admin_password=admin_password
-				)
-			],
-			"install_app": [
-				"bench --site {site_name} install-app {app_name}".format(
-					site_name=self.name, app_name=app_name
-				)
-			],
-			"uninstall_app": [
-				"bench --site {site_name} uninstall-app {app_name} --yes".format(
-					site_name=self.name, app_name=app_name
-				)
-			],
-			"drop_site": [
-				"bench drop-site {site_name} --root-password {mysql_password}".format(
-					site_name=self.name, mysql_password=mysql_password
-				)
-			],
+			"migrate": [f"bench --site {self.name} migrate"],
+			"create-alias": [f"ln -s {site_abspath} sites/{alias}"],
+			"delete-alias": [f"rm sites/{alias}"],
+			"backup": [f"bench --site {self.name} backup --with-files"],
+			"reinstall": [f"bench --site {self.name} reinstall --yes --admin-password {admin_password}"],
+			"install_app": [f"bench --site {self.name} install-app {app_name}"],
+			"uninstall_app": [f"bench --site {self.name} uninstall-app {app_name} --yes"],
+			"drop_site": [f"bench drop-site {self.name} --root-password {mysql_password}"],
 		}
 		frappe.enqueue(
 			"bench_manager.bench_manager.utils.run_command",
@@ -204,7 +190,7 @@ def get_installable_apps(site_name, doctype, docname):
 	# frappe    15.77.0 version-15
 	# orchestra 0.0.1   develop
 	result_list = result.stdout.strip().splitlines()
-	installed_apps = (element.split(' ')[0] for element in result_list)
+	installed_apps = (element.split(" ")[0] for element in result_list)
 	installable_apps = set(frappe.get_all_apps()) - set(installed_apps)
 	return (x for x in installable_apps)
 
@@ -213,7 +199,7 @@ def get_installable_apps(site_name, doctype, docname):
 def get_removable_apps(doctype, docname):
 	verify_whitelisted_call()
 	removable_app_list = frappe.get_doc(doctype, docname).app_list.split("\n")
-	removable_apps = [app.split(' ')[0] for app in removable_app_list]
+	removable_apps = [app.split(" ")[0] for app in removable_app_list]
 	removable_apps.remove("frappe")
 	return removable_apps
 
@@ -224,7 +210,7 @@ def pass_exists(doctype, docname=""):
 	# return string convention 'TT',<root_password>,<admin_password>
 	ret = {"condition": "", "root_password": "", "admin_password": ""}
 	common_site_config_path = "common_site_config.json"
-	with open(common_site_config_path, "r") as f:
+	with open(common_site_config_path) as f:
 		common_site_config_data = json.load(f)
 
 	ret["condition"] += "T" if common_site_config_data.get("root_password") else "F"
@@ -237,13 +223,11 @@ def pass_exists(doctype, docname=""):
 		return ret
 
 	site_config_path = docname + "/site_config.json"
-	with open(site_config_path, "r") as f:
+	with open(site_config_path) as f:
 		site_config_data = json.load(f)
 	# FF FT TF
 	if ret["condition"][1] == "F":
-		ret["condition"] = (
-			ret["condition"][0] + "T" if site_config_data.get("admin_password") else "F"
-		)
+		ret["condition"] = ret["condition"][0] + "T" if site_config_data.get("admin_password") else "F"
 		ret["admin_password"] = site_config_data.get("admin_password")
 	else:
 		if site_config_data.get("admin_password"):
@@ -256,9 +240,7 @@ def pass_exists(doctype, docname=""):
 def verify_password(site_name, mysql_password):
 	verify_whitelisted_call()
 	try:
-		db = pymysql.connect(
-			host=frappe.conf.db_host or "localhost", user="root", passwd=mysql_password
-		)
+		db = pymysql.connect(host=frappe.conf.db_host or "localhost", user="root", passwd=mysql_password)
 		db.close()
 	except Exception as e:
 		print(e)
@@ -270,35 +252,33 @@ def verify_password(site_name, mysql_password):
 def create_site(site_name, install_erpnext, mysql_password, admin_password, timestamp, a_async=True):
 	verify_whitelisted_call()
 	commands = [
-		"bench new-site {site_name} --mariadb-root-password {mysql_password} --admin-password {admin_password}".format(
-			site_name=site_name, admin_password=admin_password, mysql_password=mysql_password
-		)
+		f"bench new-site {site_name} --mariadb-root-password {mysql_password} --admin-password {admin_password}"
 	]
 	if install_erpnext == "true":
-		with open("apps.txt", "r") as f:
+		with open("apps.txt") as f:
 			app_list = f.read()
 		if "erpnext" not in app_list:
 			commands.append("bench get-app erpnext")
-		commands.append(
-			"bench --site {site_name} install-app erpnext".format(site_name=site_name)
-		)
-		commands.append("bench --site {site_name} migrate".format(site_name=site_name))
+		commands.append(f"bench --site {site_name} install-app erpnext")
+		commands.append(f"bench --site {site_name} migrate")
 
 	frappe.enqueue(
 		"bench_manager.bench_manager.doctype.site.site.job_site_creation",
 		commands=commands,
 		doctype="Bench Settings",
 		timestamp=timestamp,
-		site_name = site_name,
-		is_async = a_async
+		site_name=site_name,
+		is_async=a_async,
 	)
 
-def job_site_creation(commands, doctype, timestamp,site_name):
-    from bench_manager.bench_manager.utils import run_command
-    run_command(commands=commands,doctype="Bench Settings",timestamp=timestamp)
-    sync_sites()
-    site = frappe.get_doc("Site",site_name)
-    if site.developer_flag == 1:
-            site.update_app_list()
-    site.save()
-    frappe.db.commit()
+
+def job_site_creation(commands, doctype, timestamp, site_name):
+	from bench_manager.bench_manager.utils import run_command
+
+	run_command(commands=commands, doctype="Bench Settings", timestamp=timestamp)
+	sync_sites()
+	site = frappe.get_doc("Site", site_name)
+	if site.developer_flag == 1:
+		site.update_app_list()
+	site.save()
+	frappe.db.commit()

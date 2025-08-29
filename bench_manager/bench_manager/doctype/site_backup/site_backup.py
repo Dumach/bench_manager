@@ -7,8 +7,9 @@ import shlex
 from subprocess import check_output
 
 import frappe
-from bench_manager.bench_manager.utils import verify_whitelisted_call
 from frappe.model.document import Document
+
+from bench_manager.bench_manager.utils import verify_whitelisted_call
 
 
 class SiteBackup(Document):
@@ -30,13 +31,12 @@ class SiteBackup(Document):
 		site_name: DF.Data
 		stored_location: DF.Data
 		time: DF.Data
+
 	# end: auto-generated types
 	def autoname(self):
-		if self.site_name == None:
+		if self.site_name is None:
 			return
-		self.name = (
-			self.date + " " + self.time + " " + self.site_name + " " + self.stored_location
-		)
+		self.name = self.date + " " + self.time + " " + self.site_name + " " + self.stored_location
 
 	def validate(self):
 		if self.get("__islocal"):
@@ -95,33 +95,19 @@ def restore_backup(
 	verify_whitelisted_call()
 	backup = frappe.get_doc("Site Backup", docname)
 	commands = []
-	password_suffix = "--admin-password {admin_password} --mariadb-root-password {mysql_password}".format(
-		mysql_password=mysql_password, admin_password=admin_password
-	)
+	password_suffix = f"--admin-password {admin_password} --mariadb-root-password {mysql_password}"
 	site_name = existing_site
 	if on_a_new_site == "1":
 		site_name = new_site_name
-		commands.append(
-			"bench new-site {site_name} {password_suffix}".format(
-				site_name=site_name, password_suffix=password_suffix
-			)
-		)
-	command = "bench --site {site_name} --force restore {backup_file_path}-database.sql".format(
-		site_name=site_name, backup_file_path=backup.file_path
-	)
-	if not os.path.isfile(
-		"{backup_file_path}_database.sql".format(backup_file_path=backup.file_path)
-	):
+		commands.append(f"bench new-site {site_name} {password_suffix}")
+	command = f"bench --site {site_name} --force restore {backup.file_path}-database.sql"
+	if not os.path.isfile(f"{backup.file_path}_database.sql"):
 		command += ".gz"
 	if backup.public_file_backup:
-		command += " --with-public-files ../{backup_file_path}_files.tar".format(
-			backup_file_path=backup.file_path
-		)
+		command += f" --with-public-files ../{backup.file_path}_files.tar"
 	if backup.private_file_backup:
-		command += " --with-private-files ../{backup_file_path}_private_files.tar".format(
-			backup_file_path=backup.file_path
-		)
-	command += " {password_suffix}".format(password_suffix=password_suffix)
+		command += f" --with-private-files ../{backup.file_path}_private_files.tar"
+	command += f" {password_suffix}"
 	commands.append(command)
 	frappe.enqueue(
 		"bench_manager.bench_manager.utils.run_command",

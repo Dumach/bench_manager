@@ -38,6 +38,7 @@ from bench_manager.bench_manager.utils import (
 
 ignore_list = [".DS_Store"]
 
+
 class BenchSettings(Document):
 	# begin: auto-generated types
 	# This code is auto-generated. Do not modify anything in this block.
@@ -83,7 +84,7 @@ class BenchSettings(Document):
 		use_tls: DF.Check
 		webserver_port: DF.Int
 	# end: auto-generated types
-	site_config_fields = [
+	site_config_fields = (
 		"gunicorn_workers",
 		"background_workers",
 		"shallow_clone",
@@ -112,7 +113,7 @@ class BenchSettings(Document):
 		"update_bench_on_update",
 		"webserver_port",
 		"file_watcher_port",
-	]
+	)
 
 	def set_attr(self, varname, varval):
 		return setattr(self, varname, varval)
@@ -165,33 +166,36 @@ class BenchSettings(Document):
 
 	def sync_site_config(self):
 		common_site_config_path = "common_site_config.json"
-		with open(common_site_config_path, "r") as f:
+		with open(common_site_config_path) as f:
 			common_site_config_data = json.load(f)
 			for site_config_field in self.site_config_fields:
-				try:
-					self.set_attr(site_config_field, common_site_config_data[site_config_field])
-				except:
-					pass
+				if not common_site_config_data.get(site_config_field, None):
+					continue
+				site_config_field = common_site_config_data[site_config_field]
 
 	def update_git_details(self):
 		self.frappe_git_branch = safe_decode(
-			check_output(
-				"git rev-parse --abbrev-ref HEAD".split(), cwd=os.path.join("..", "apps", "frappe")
-			)
+			check_output("git rev-parse --abbrev-ref HEAD".split(), cwd=os.path.join("..", "apps", "frappe"))
 		).strip("\n")
 
 	@frappe.whitelist()
 	def console_command(self, timestamp, caller, app_name=None, branch_name=None):
 		commands = {
-			"bench_update": ["bench update --reset",
-				f"bench --site {frappe.local.site} execute bench_manager.bench_manager.utils.resume_sites"],
+			"bench_update": [
+				"bench update --reset",
+				f"bench --site {frappe.local.site} execute bench_manager.bench_manager.utils.resume_sites",
+			],
 			"switch_branch": [""],
-			"get-app": ["bench get-app {app_name}".format(app_name=app_name)],
+			"get-app": [f"bench get-app {app_name}"],
 		}
 
 		if ("bench_update" in caller) and (frappe.get_common_site_config()["developer_mode"]):
-			frappe.throw(_("Updating a site is not allowed when 'developer_mode' is ON in common_site_config." + "<br><br>" +
-				"Reason: in developer mode you might have uncommitted changes that would be erased if updated with '--reset'")
+			frappe.throw(
+				_(
+					"Updating a site is not allowed when 'developer_mode' is ON in common_site_config."
+					+ "<br><br>"
+					+ "Reason: in developer mode you might have uncommitted changes that would be erased if updated with '--reset'"
+				)
 			)
 
 		frappe.enqueue(
@@ -260,14 +264,14 @@ def sync_apps():
 
 def update_app_list():
 	app_list_file = "apps.txt"
-	with open(app_list_file, "r") as f:
+	with open(app_list_file) as f:
 		apps = f.read().split("\n")
 	return apps
 
 
 def update_site_list():
 	site_list = []
-	for root, dirs, files in os.walk(".", topdown=True):
+	for root, _dirs, files in os.walk(".", topdown=True):
 		for name in files:
 			if name == "site_config.json":
 				site_list.append(str(root).strip("./"))
@@ -326,18 +330,19 @@ def sync_backups():
 		doc.delete()
 		frappe.db.commit()
 
+
 def update_backup_list():
 	all_sites = []
 	archived_sites = []
 	sites = []
-	for root, dirs, files in os.walk("../archived_sites/", topdown=True):
+	for _root, dirs, _files in os.walk("../archived_sites/", topdown=True):
 		archived_sites.extend(dirs)
 		break
 	archived_sites = ["../archived_sites/" + x for x in archived_sites]
 	all_sites.extend(archived_sites)
-	for root, dirs, files in os.walk("../sites/", topdown=True):
+	for _root, dirs, _files in os.walk("../sites/", topdown=True):
 		for site in dirs:
-			if os.path.isfile("../sites/{}/site_config.json".format(site)):
+			if os.path.isfile(f"../sites/{site}/site_config.json"):
 				sites.append(site)
 		break
 	sites = ["../sites/" + x for x in sites]
@@ -345,7 +350,6 @@ def update_backup_list():
 
 	response = []
 
-	backups = []
 	for site in all_sites:
 		backup_path = os.path.join(site, "private", "backups")
 		backup_files = os.listdir(backup_path)
@@ -370,7 +374,7 @@ def update_backup_list():
 				inner_response["date"] = get_date(datetime_with_site)
 				inner_response["time"] = get_time(datetime_with_site)
 				inner_response["hash"] = get_hash(datetime_with_site)
-			except IndexError as e:
+			except IndexError:
 				inner_response["date"] = str(datetime.now().date())
 				inner_response["time"] = str(datetime.now().time())
 				inner_response["hash"] = " "
@@ -397,42 +401,31 @@ def sync_all(in_background=False):
 	if not in_background:
 		frappe.msgprint("Sync has started and will run in the background...")
 	verify_whitelisted_call()
-	frappe.enqueue(
-		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_sites"
-	)
-	frappe.enqueue(
-		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_apps"
-	)
-	frappe.enqueue(
-		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_backups"
-	)
-	frappe.set_value(
-		"Bench Settings", None, "last_sync_timestamp", frappe.utils.time.time()
-	)
+	frappe.enqueue("bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_sites")
+	frappe.enqueue("bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_apps")
+	frappe.enqueue("bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_backups")
+	frappe.set_value("Bench Settings", None, "last_sync_timestamp", frappe.utils.time.time())
 
 
 @frappe.whitelist()
 def setup_and_restart_nginx(root_password):
-    now = datetime.now()
-    dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
-    commands = [
-		"bench setup nginx --yes"
-	]
-    commands.append(f"echo '{root_password}' | sudo -S service nginx restart")
-    run_command(commands,"Bench Settings",dt_string)
+	now = datetime.now()
+	dt_string = now.strftime("%d/%m/%Y %H:%M:%S")
+	commands = ["bench setup nginx --yes"]
+	commands.append(f"echo '{root_password}' | sudo -S service nginx restart")
+	run_command(commands, "Bench Settings", dt_string)
+
 
 def run_command(commands, doctype, timestamp, cwd="..", docname=" ", after_command=None):
 	start_time = frappe.utils.time.time()
 	console_dump = ""
 	logged_command = " && ".join(commands)
-	logged_command += (
-		" "  # to make sure passwords at the end of the commands are also hidden
-	)
+	logged_command += " "  # to make sure passwords at the end of the commands are also hidden
 	sensitive_data = ["--mariadb-root-password", "--admin-password", "--root-password"]
 	for password in sensitive_data:
-		logged_command = re.sub("{password} .*? ".format(password=password), "", logged_command, flags=re.DOTALL)
+		logged_command = re.sub(f"{password} .*? ", "", logged_command, flags=re.DOTALL)
 	the_password = logged_command.split("'")[1].split("'")[0]
-	logged_command = logged_command.replace(the_password,"******")
+	logged_command = logged_command.replace(the_password, "******")
 	doc = frappe.get_doc(
 		{
 			"doctype": "Bench Manager Command",
@@ -446,25 +439,19 @@ def run_command(commands, doctype, timestamp, cwd="..", docname=" ", after_comma
 	frappe.db.commit()
 	frappe.publish_realtime(
 		timestamp,
-		"Executing Command:\n{logged_command}\n\n".format(logged_command=logged_command),
+		f"Executing Command:\n{logged_command}\n\n",
 		user=frappe.session.user,
 	)
 	try:
 		for command in commands:
-			terminal = Popen(
-				shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd
-			)
+			terminal = Popen(shlex.split(command), stdin=PIPE, stdout=PIPE, stderr=STDOUT, cwd=cwd)
 			for c in iter(lambda: safe_decode(terminal.stdout.read(1)), ""):
 				frappe.publish_realtime(timestamp, c, user=frappe.session.user)
 		if terminal.wait():
-			_close_the_doc(
-				start_time, timestamp, console_dump, status="Failed", user=frappe.session.user
-			)
+			_close_the_doc(start_time, timestamp, console_dump, status="Failed", user=frappe.session.user)
 		else:
-			_close_the_doc(
-				start_time, timestamp, console_dump, status="Success", user=frappe.session.user
-			)
-	except Exception as e:
+			_close_the_doc(start_time, timestamp, console_dump, status="Success", user=frappe.session.user)
+	except Exception:
 		_close_the_doc(
 			start_time,
 			timestamp,
@@ -484,84 +471,98 @@ def run_command(commands, doctype, timestamp, cwd="..", docname=" ", after_comma
 
 
 def backup_sites_with_daily_option():
-    site_list = frappe.get_list("Site",filters={"frequency":"Daily","auto_backup":1,"dropbox_backup":0})
-    if site_list:
-        create_backup(site_list)
+	site_list = frappe.get_list("Site", filters={"frequency": "Daily", "auto_backup": 1, "dropbox_backup": 0})
+	if site_list:
+		create_backup(site_list)
+
 
 def backup_sites_with_weekly_option():
-    site_list = frappe.get_list("Site",filters={"frequency":"Weekly","auto_backup":1,"dropbox_backup":0})
-    if site_list:
-        create_backup(site_list)
+	site_list = frappe.get_list(
+		"Site", filters={"frequency": "Weekly", "auto_backup": 1, "dropbox_backup": 0}
+	)
+	if site_list:
+		create_backup(site_list)
+
 
 def backup_sites_with_monthly_option():
-    site_list = frappe.get_list("Site",filters={"frequency":"Monthly","auto_backup":1,"dropbox_backup":0})
-    if site_list:
-        create_backup(site_list)
+	site_list = frappe.get_list(
+		"Site", filters={"frequency": "Monthly", "auto_backup": 1, "dropbox_backup": 0}
+	)
+	if site_list:
+		create_backup(site_list)
 
 
 def dropbox_backup_sites_with_daily_option():
-    site_list = frappe.get_list("Site",filters={"frequency":"Daily","auto_backup":1,"dropbox_backup":1})
-    if site_list:
-        take_dropbox_backup(site_list)
+	site_list = frappe.get_list("Site", filters={"frequency": "Daily", "auto_backup": 1, "dropbox_backup": 1})
+	if site_list:
+		take_dropbox_backup(site_list)
+
 
 def dropbox_backup_sites_with_weekly_option():
-    site_list = frappe.get_list("Site",filters={"frequency":"Weekly","auto_backup":1,"dropbox_backup":1})
-    if site_list:
-        take_dropbox_backup(site_list)
+	site_list = frappe.get_list(
+		"Site", filters={"frequency": "Weekly", "auto_backup": 1, "dropbox_backup": 1}
+	)
+	if site_list:
+		take_dropbox_backup(site_list)
+
 
 def dropbox_backup_sites_with_monthly_option():
-    site_list = frappe.get_list("Site",filters={"frequency":"Monthly","auto_backup":1,"dropbox_backup":1})
-    if site_list:
-        take_dropbox_backup(site_list)
+	site_list = frappe.get_list(
+		"Site", filters={"frequency": "Monthly", "auto_backup": 1, "dropbox_backup": 1}
+	)
+	if site_list:
+		take_dropbox_backup(site_list)
+
 
 def discover_backups():
-    """
-    Discover and record existing backups by using sync_backups function.
-    This runs hourly to keep backup records up to date.
-    """
-    try:
-        sync_backups()
-        frappe.logger().info("Successfully discovered and synced existing backups")
-    except Exception as e:
-        frappe.log_error(f"Failed to discover backups: {str(e)}")
+	"""
+	Discover and record existing backups by using sync_backups function.
+	This runs hourly to keep backup records up to date.
+	"""
+	try:
+		sync_backups()
+		frappe.logger().info("Successfully discovered and synced existing backups")
+	except Exception as e:
+		frappe.log_error(f"Failed to discover backups: {e!s}")
 
 
 def create_backup(site_list):
-    from bench_manager.bench_manager.utils import run_command
-    for i in site_list:
-        site_doc = frappe.get_doc("Site", i.name)
-        key = datetime.now() + timedelta(seconds=1)
-        commands = ["bench --site {site_name} backup --with-files".format(site_name=i.name)]
-        doctype = site_doc.doctype
-        key = key.strftime("%Y/%m/%d, %H:%M:%S")
-        docname = i.name
-        run_command(commands, doctype, key, docname)
+	from bench_manager.bench_manager.utils import run_command
+
+	for i in site_list:
+		site_doc = frappe.get_doc("Site", i.name)
+		key = datetime.now() + timedelta(seconds=1)
+		commands = [f"bench --site {i.name} backup --with-files"]
+		doctype = site_doc.doctype
+		key = key.strftime("%Y/%m/%d, %H:%M:%S")
+		docname = i.name
+		run_command(commands, doctype, key, docname)
 
 
 def create_weekly_backups():
-    """
-    Create weekly backups for all sites configured for weekly backup schedule.
-    This runs as part of the weekly_long scheduler event.
-    """
-    site_list = frappe.get_list("Site", filters={"auto_backup": 1})
-    if site_list:
-        create_backup(site_list)
+	"""
+	Create weekly backups for all sites configured for weekly backup schedule.
+	This runs as part of the weekly_long scheduler event.
+	"""
+	site_list = frappe.get_list("Site", filters={"auto_backup": 1})
+	if site_list:
+		create_backup(site_list)
 
 
 def take_dropbox_backup(site_list):
 	"""Enqueue longjob for taking backup to dropbox"""
 	enqueue(
 		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.take_backup_to_dropbox",
-		site_list = site_list,
+		site_list=site_list,
 		queue="long",
 		timeout=1500,
 	)
 	frappe.msgprint(_("Queued for backup. It may take a few minutes to an hour."))
 
 
-def take_backup_to_dropbox(site_list,retry_count=0, upload_db_backup=True):
+def take_backup_to_dropbox(site_list, retry_count=0, upload_db_backup=True):
 	try:
-		backup_to_dropbox(site_list,upload_db_backup)
+		backup_to_dropbox(site_list, upload_db_backup)
 		if cint(frappe.db.get_value("Bench Settings", None, "send_email_for_successful_backup")):
 			send_email(True, "Dropbox", "Bench Settings", "send_notifications_to")
 	except JobTimeoutException:
@@ -574,7 +575,7 @@ def take_backup_to_dropbox(site_list,retry_count=0, upload_db_backup=True):
 				"bench_manager.bench_manager.doctype.bench_settings.bench_settings.take_backup_to_dropbox",
 				queue="long",
 				timeout=1500,
-				**args
+				**args,
 			)
 	except Exception:
 		error_message = frappe.get_traceback()
@@ -601,9 +602,7 @@ def get_dropbox_authorize_url():
 def get_redirect_url():
 	if not frappe.conf.dropbox_broker_site:
 		frappe.conf.dropbox_broker_site = "https://dropbox.erpnext.com"
-	url = "{0}/api/method/dropbox_erpnext_broker.www.setup_dropbox.get_authotize_url".format(
-		frappe.conf.dropbox_broker_site
-	)
+	url = f"{frappe.conf.dropbox_broker_site}/api/method/dropbox_erpnext_broker.www.setup_dropbox.get_authotize_url"
 
 	try:
 		response = make_post_request(url, data={"site": get_url()})
@@ -619,7 +618,7 @@ def get_redirect_url():
 		)
 
 
-def backup_to_dropbox(site_list,upload_db_backup=True):
+def backup_to_dropbox(site_list, upload_db_backup=True):
 	if not frappe.db:
 		frappe.connect()
 
@@ -638,24 +637,29 @@ def backup_to_dropbox(site_list,upload_db_backup=True):
 		dropbox_settings["access_token"] = access_token["oauth2_token"]
 		set_dropbox_access_token(access_token["oauth2_token"])
 
-	dropbox_client = dropbox.Dropbox(
-		oauth2_access_token=dropbox_settings["access_token"], timeout=None
-	)
+	dropbox_client = dropbox.Dropbox(oauth2_access_token=dropbox_settings["access_token"], timeout=None)
 
 	if upload_db_backup:
-			if site_list:
-				create_backup(site_list)
-				sync_backups()
-				for i in site_list:
-					last_doc = frappe.get_list("Site Backup", filters={'site_name':i.name}, fields=['file_path'], order_by="creation desc",limit = 1)[0]
-					list_string = last_doc.file_path.split('/')
-					list_string.pop(0)
-					list_string.insert(0, '.')
-					string_list = ("/".join(list_string))
-					upload_file_to_dropbox(string_list+"-database.sql.gz", f"/{i.name}", dropbox_client)
-					upload_file_to_dropbox(string_list+"-site_config_backup.json", f"/{i.name}", dropbox_client)
-					upload_file_to_dropbox(string_list+"-private-files.tar", f"/{i.name}", dropbox_client)
-					upload_file_to_dropbox(string_list+"-files.tar", f"/{i.name}", dropbox_client)
+		if site_list:
+			create_backup(site_list)
+			sync_backups()
+			for i in site_list:
+				last_doc = frappe.get_list(
+					"Site Backup",
+					filters={"site_name": i.name},
+					fields=["file_path"],
+					order_by="creation desc",
+					limit=1,
+				)[0]
+				list_string = last_doc.file_path.split("/")
+				list_string.pop(0)
+				list_string.insert(0, ".")
+				string_list = "/".join(list_string)
+				upload_file_to_dropbox(string_list + "-database.sql.gz", f"/{i.name}", dropbox_client)
+				upload_file_to_dropbox(string_list + "-site_config_backup.json", f"/{i.name}", dropbox_client)
+				upload_file_to_dropbox(string_list + "-private-files.tar", f"/{i.name}", dropbox_client)
+				upload_file_to_dropbox(string_list + "-files.tar", f"/{i.name}", dropbox_client)
+
 
 def upload_file_to_dropbox(filename, folder, dropbox_client):
 	"""upload files with chunk of 15 mb to reduce session append calls"""
@@ -669,7 +673,7 @@ def upload_file_to_dropbox(filename, folder, dropbox_client):
 	mode = dropbox.files.WriteMode.overwrite
 
 	f = open(encode(filename), "rb")
-	path = "{0}/{1}".format(folder, os.path.basename(filename))
+	path = f"{folder}/{os.path.basename(filename)}"
 
 	try:
 		if file_size <= chunk_size:
@@ -691,7 +695,7 @@ def upload_file_to_dropbox(filename, folder, dropbox_client):
 					cursor.offset = f.tell()
 	except dropbox.exceptions.ApiError as e:
 		if isinstance(e.error, dropbox.files.UploadError):
-			error = "File Path: {path}\n".format(path=path)
+			error = f"File Path: {path}\n"
 			error += frappe.get_traceback()
 			frappe.log_error(error)
 		else:
@@ -777,8 +781,8 @@ def dropbox_auth_finish(return_access_token=False):
 
 
 def set_dropbox_access_token(access_token):
-    frappe.db.set_value("Bench Settings", None, "dropbox_access_token", access_token)
-    frappe.db.commit()
+	frappe.db.set_value("Bench Settings", None, "dropbox_access_token", access_token)
+	frappe.db.commit()
 
 
 def generate_oauth2_access_token_from_oauth1_token(dropbox_settings=None):
