@@ -514,19 +514,38 @@ def dropbox_backup_sites_with_monthly_option():
     if site_list:
         take_dropbox_backup(site_list)
 
-def create_backup(site_list):
+def discover_backups():
     """
-    Discover and record Frappe's automatic backups instead of creating new ones.
-    This prevents duplicate backups in Frappe v15 which already runs automatic backups.
-
-    Uses the existing sync_backups function to discover and record all backups.
+    Discover and record existing backups by using sync_backups function.
+    This runs hourly to keep backup records up to date.
     """
     try:
-        # Use the existing comprehensive backup sync function
         sync_backups()
-        frappe.logger().info(f"Successfully discovered backups for {len(site_list)} sites")
+        frappe.logger().info("Successfully discovered and synced existing backups")
     except Exception as e:
-        frappe.log_error(f"Failed to sync backups: {str(e)}")
+        frappe.log_error(f"Failed to discover backups: {str(e)}")
+
+
+def create_backup(site_list):
+    from bench_manager.bench_manager.utils import run_command
+    for i in site_list:
+        site_doc = frappe.get_doc("Site", i.name)
+        key = datetime.now() + timedelta(seconds=1)
+        commands = ["bench --site {site_name} backup --with-files".format(site_name=i.name)]
+        doctype = site_doc.doctype
+        key = key.strftime("%Y/%m/%d, %H:%M:%S")
+        docname = i.name
+        run_command(commands, doctype, key, docname)
+
+
+def create_weekly_backups():
+    """
+    Create weekly backups for all sites configured for weekly backup schedule.
+    This runs as part of the weekly_long scheduler event.
+    """
+    site_list = frappe.get_list("Site", filters={"auto_backup": 1})
+    if site_list:
+        create_backup(site_list)
 
 
 def take_dropbox_backup(site_list):
