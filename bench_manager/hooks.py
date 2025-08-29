@@ -167,7 +167,7 @@ scheduler_events = {
 # 		"bench_manager.tasks.all"
 # 	],
 	"daily": [
-		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_backup"
+		"bench_manager.bench_manager.doctype.bench_settings.bench_settings.sync_backups"
 	],
 # 	"hourly": [
 # 		"bench_manager.tasks.hourly"
