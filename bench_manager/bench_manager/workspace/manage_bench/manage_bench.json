@@ -1,0 +1,82 @@
+{
+ "charts": [],
+ "content": "[{\"id\":\"f-TRZutrN1\",\"type\":\"card\",\"data\":{\"card_name\":\"Bench Command \",\"col\":4}},{\"id\":\"kuGr5Sl2b2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\"><b>Statistics</b></span>\",\"col\":12}},{\"id\":\"D-arVgrqzt\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Number of Registered Sites\",\"col\":4}},{\"id\":\"6CyiuoGlY7\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Number of Apps\",\"col\":4}},{\"id\":\"sdOYQLH7No\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Number of Backups\",\"col\":4}},{\"id\":\"2oTStkRyjE\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"MUFB6-4lN5\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Failed Command Logs\",\"col\":5}}]",
+ "creation": "2025-08-26 11:14:54.077732",
+ "custom_blocks": [],
+ "docstatus": 0,
+ "doctype": "Workspace",
+ "for_user": "",
+ "hide_custom": 0,
+ "icon": "setting-gear",
+ "idx": 0,
+ "indicator_color": "",
+ "is_hidden": 0,
+ "label": "Manage Bench",
+ "links": [
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bench Command ",
+   "link_count": 2,
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Card Break"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Bench Settings",
+   "link_count": 0,
+   "link_to": "Bench Settings",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Command Logs",
+   "link_count": 0,
+   "link_to": "Bench Manager Command",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  }
+ ],
+ "modified": "2025-08-29 09:03:43.209364",
+ "modified_by": "Administrator",
+ "module": "Bench Manager",
+ "name": "Manage Bench",
+ "number_cards": [
+  {
+   "label": "Number of Registered Sites",
+   "number_card_name": "Registered Sites"
+  },
+  {
+   "label": "Number of Apps",
+   "number_card_name": "Number of Apps"
+  },
+  {
+   "label": "Number of Backups",
+   "number_card_name": "Number of Backups"
+  }
+ ],
+ "owner": "Administrator",
+ "parent_page": "",
+ "public": 1,
+ "quick_lists": [
+  {
+   "document_type": "Bench Manager Command",
+   "label": "Failed Command Logs",
+   "quick_list_filter": "[[\"Bench Manager Command\",\"status\",\"=\",\"Failed\",false]]"
+  }
+ ],
+ "roles": [
+  {
+   "role": "Administrator"
+  }
+ ],
+ "sequence_id": 1.0,
+ "shortcuts": [],
+ "title": "Manage Bench"
+}
