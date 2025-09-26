@@ -5,7 +5,7 @@ authors = [
     { name = "Frappe", email = "info@frappe.io"}
 ]
 description = "On Host Frappe Management Application"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 readme = "README.md"
 dynamic = ["version"]
 dependencies = [
